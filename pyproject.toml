@@ -1,0 +1,104 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mna"
+version = "0.1.0"
+description = "M&A Due Diligence Multi-Agent sample on Amazon Bedrock AgentCore"
+readme = "README.md"
+license = { text = "MIT-0" }
+requires-python = ">=3.11"
+authors = [
+    { name = "AWS Samples" },
+]
+keywords = [
+    "aws",
+    "bedrock",
+    "agentcore",
+    "strands",
+    "multi-agent",
+    "m-and-a",
+    "due-diligence",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT No Attribution License (MIT-0)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.scripts]
+mna = "cli.invoke:main"
+
+[project.urls]
+Homepage = "https://github.com/aws-samples/sample-ma-due-diligence-agentcore"
+Issues = "https://github.com/aws-samples/sample-ma-due-diligence-agentcore/issues"
+
+[tool.setuptools]
+# The ``mna`` package lives under ``src/`` (src-layout) while the CLI
+# ``cli`` package lives at the repo root. We register both explicitly so
+# the ``mna = "cli.invoke:main"`` entry point in ``[project.scripts]``
+# resolves after ``pip install -e .``.
+package-dir = { "" = "src", "cli" = "cli" }
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
+include = ["mna*", "cli*"]
+exclude = ["tests*", "infra*", "lambda*", "data*", "scripts*", "notebooks*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [
+    ".venv",
+    "cdk.out",
+    "notebooks",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "SIM", # flake8-simplify
+    "C4",  # flake8-comprehensions
+]
+ignore = [
+    "E501", # line too long - handled by formatter
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["N802", "N803", "N818"]
+"lambda/**/*.py" = ["N802", "N803"]
+"scripts/**/*.py" = ["N802", "N803"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+markers = [
+    "unit: fast unit tests with no AWS dependency",
+    "integration: tests that call AWS services",
+    "smoke: post-deploy smoke tests",
+]

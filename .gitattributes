@@ -1,0 +1,31 @@
+# Ensure consistent line endings across platforms.
+# Default: let Git decide based on file content.
+* text=auto
+
+# Enforce LF for POSIX shell scripts and Python sources.
+*.sh    text eol=lf
+*.py    text eol=lf
+
+# Enforce CRLF for Windows PowerShell scripts.
+*.ps1   text eol=crlf
+
+# Documentation and config stay LF for cross-platform readability.
+*.md        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.json      text eol=lf
+*.toml      text eol=lf
+*.cfg       text eol=lf
+*.ini       text eol=lf
+*.sql       text eol=lf
+Dockerfile  text eol=lf
+
+# Treat common binary formats as binary explicitly.
+*.pdf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.zip   binary
+*.gz    binary

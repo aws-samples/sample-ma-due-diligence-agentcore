@@ -1,0 +1,20 @@
+# Lambda-side pinned dependencies.
+#
+# The Lambda managed Python runtime bundles an older boto3 than the
+# evolving AWS services (notably Bedrock AgentCore) currently require.
+# Relying on that bundled SDK produced a client-side
+# ``ParamValidationError`` when calling ``CreateGateway`` because the
+# runtime's service model marked ``authorizerConfiguration`` as
+# required while newer models correctly treat it as optional for
+# non-JWT authorizer types.
+#
+# To decouple our CR handlers from the runtime's bundled SDK, we
+# install these packages into ``lambda/_vendor/`` as a pre-packaging
+# step (``deploy.ps1`` / ``deploy.sh``) and set ``PYTHONPATH`` on each
+# CR Lambda so the vendored copy wins at import time.
+#
+# Keep this list minimal — only what the handlers actually import.
+# The deployment package grows by whatever ships here, and asset
+# hashing means any change forces a Lambda redeploy.
+boto3==1.42.37
+botocore==1.42.37

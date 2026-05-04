@@ -1,0 +1,30 @@
+# Agent container runtime dependencies.
+#
+# Kept deliberately minimal. Anything installed here lands in the
+# ARM64 container image that AgentCore Runtime pulls on every cold
+# start. The top-level ``requirements.txt`` at the repo root includes
+# dev tooling (ruff, pytest) and infrastructure packages (aws-cdk-lib,
+# reportlab, psycopg) that an agent container has no business
+# carrying.
+#
+# Kept pinned to match what :mod:`mna.client` and :mod:`mna.tools.*`
+# import at runtime. boto3/botocore versions match
+# ``lambda/requirements.txt`` so every compute surface in the sample
+# resolves the same AWS service models.
+
+# AWS SDKs
+boto3==1.42.37
+botocore==1.42.37
+
+# Agent frameworks — hosts the agent and exposes the MCP-shaped
+# invocation surface AgentCore Runtime expects. The memory
+# integrations module (``bedrock_agentcore.memory.integrations.strands``)
+# requires bedrock-agentcore >= 1.0 and strands-agents >= 1.0.
+strands-agents>=1.0.0
+bedrock-agentcore>=1.0.0
+
+# OpenTelemetry auto-instrumentation — required so the container's
+# stdout/stderr (including Python tracebacks) reaches CloudWatch via
+# AgentCore's built-in observability pipeline. Without this, the
+# container runs but logs nothing visible.
+aws-opentelemetry-distro>=0.10.0

@@ -1,0 +1,91 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.ruff_cache/
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ---- Node / CDK ----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# CDK
+cdk.out/
+cdk.context.json
+*.d.ts.map
+*.js.map
+
+# ---- AWS ----
+.aws-sam/
+samconfig.toml
+
+# ---- IDE / OS ----
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- Local overrides ----
+.env
+.env.local
+*.local
+local_settings.py
+
+# ---- Project-specific ----
+# Generated synthetic data artifacts (regenerate with data/generate.py)
+data/generated/
+data/*.pdf
+data/*.md
+!data/generate.py
+!data/schemas/
+!data/templates/
+
+# Vendored Lambda dependencies (populated by deploy.sh / deploy.ps1
+# from lambda/requirements.txt before ``cdk deploy``).
+lambda/_vendor/
