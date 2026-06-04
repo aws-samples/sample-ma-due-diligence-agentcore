@@ -104,7 +104,7 @@ class _FakeAgentCoreClient:
             "gateway": {
                 "gatewayId": "gw-abc123",
                 "gatewayArn": (
-                    "arn:aws:bedrock-agentcore:us-east-1:111111111111:"
+                    "arn:aws:bedrock-agentcore:us-east-1:111122223333:"
                     "gateway/gw-abc123"
                 ),
                 "status": "READY",
@@ -140,7 +140,7 @@ class _FakeAgentCoreClient:
             "gateway": {
                 "gatewayId": kwargs["gatewayIdentifier"],
                 "gatewayArn": (
-                    f"arn:aws:bedrock-agentcore:us-east-1:111111111111:"
+                    f"arn:aws:bedrock-agentcore:us-east-1:111122223333:"
                     f"gateway/{kwargs['gatewayIdentifier']}"
                 ),
                 "status": "READY",
@@ -193,10 +193,10 @@ def _default_properties(**overrides: Any) -> dict:
         "GatewayName": "mna-gateway",
         "Description": "test gateway",
         "ProtocolType": "MCP",
-        "RoleArn": "arn:aws:iam::111111111111:role/GatewayServiceRole",
+        "RoleArn": "arn:aws:iam::111122223333:role/GatewayServiceRole",
         "TargetName": "market_data",
         "TargetLambdaArn": (
-            "arn:aws:lambda:us-east-1:111111111111:function:mna-market-data"
+            "arn:aws:lambda:us-east-1:111122223333:function:mna-market-data"
         ),
     }
     props.update(overrides)
@@ -212,7 +212,7 @@ def _event(
     event: dict[str, Any] = {
         "RequestType": request_type,
         "ResponseURL": "https://cfn-cr-responses.example.com/presigned",
-        "StackId": "arn:aws:cloudformation:us-east-1:111111111111:stack/test/guid",
+        "StackId": "arn:aws:cloudformation:us-east-1:111122223333:stack/test/guid",
         "RequestId": "req-guid",
         "LogicalResourceId": "AgentGateway",
         "ResourceProperties": properties if properties is not None else _default_properties(),
@@ -341,7 +341,7 @@ class TestUpdateSuccess:
             mock_urlopen.reset_mock()
 
             new_lambda_arn = (
-                "arn:aws:lambda:us-east-1:111111111111:function:mna-market-data-v2"
+                "arn:aws:lambda:us-east-1:111122223333:function:mna-market-data-v2"
             )
             updated = _default_properties(
                 TargetLambdaArn=new_lambda_arn,

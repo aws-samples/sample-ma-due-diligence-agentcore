@@ -30,7 +30,7 @@ prior-deal memos in the AgentCore Memory `prior_deals` namespace.
 
 **Prompt:**
 
-> Screen our target pipeline for transportation companies with revenue
+> Screen the target pipeline for transportation companies with revenue
 > between $100M and $500M, EBITDA margin above 12%, and fleet size
 > above 200. Surface the top three and tell me what the CIM says about
 > the leader's growth trajectory.
@@ -47,7 +47,7 @@ prior-deal memos in the AgentCore Memory `prior_deals` namespace.
   (or `.pdf`) for the leader, cited inline as
   `[source: s3://.../cims/<slug>.md, p. N]`.
 
-**What this demonstrates:** Text-to-SQL over Amazon Aurora PostgreSQL
+**What this demonstrates:** Text-to-SQL over AWS Aurora PostgreSQL
 via the RDS Data API (Requirement 2a), SELECT-only SQL safety, and
 Bedrock Knowledge Base retrieval used as enrichment (Requirement 2.1,
 2.2).
@@ -58,7 +58,7 @@ Bedrock Knowledge Base retrieval used as enrichment (Requirement 2.1,
 
 **Prompt:**
 
-> Run a DCF on Acme Logistics using the CIM in the knowledge base.
+> Run a DCF on Example Corp using the CIM in the knowledge base.
 > Flag any management projection that diverges from historical
 > performance by more than 20%, and pull comparable multiples for
 > transportation-logistics mid-market.
@@ -67,9 +67,9 @@ Bedrock Knowledge Base retrieval used as enrichment (Requirement 2.1,
 
 **Expected citation sources:**
 
-- `s3://<docs-bucket>/cims/acme_logistics.md` — trailing revenue, EBITDA
+- `s3://<docs-bucket>/cims/example_corp.md` — trailing revenue, EBITDA
   margin, historical CAGR, management projections.
-- `s3://<docs-bucket>/financials/acme_logistics_statements.md` — income
+- `s3://<docs-bucket>/financials/example_corp_statements.md` — income
   statement and cash flow summary feeding the DCF.
 - `(synthetic: market_data)` — comparable-company multiples returned by
   the AgentCore Gateway-backed Lambda, labelled synthetic inline.
@@ -86,7 +86,7 @@ the X-Ray trace (Sample-level AC 4).
 
 **Prompt:**
 
-> Compare Acme Logistics' integration profile against our three most
+> Compare Example Corp's integration profile against our three most
 > recent completed acquisitions. Identify the top three integration
 > risks and cite the source memos.
 
@@ -100,7 +100,7 @@ the X-Ray trace (Sample-level AC 4).
   with smooth integration.
 - `memory:prior_deals/prior_deal_bastion_2020` — failed-integration
   case ending in writedown.
-- `s3://<docs-bucket>/cims/acme_logistics.md` — target-profile context
+- `s3://<docs-bucket>/cims/example_corp.md` — target-profile context
   (customer concentration, service-line mix) used to benchmark against
   each memo.
 
@@ -115,7 +115,7 @@ and combined grounding across memory and the KB.
 
 **Prompt:**
 
-> Review the Acme Logistics analysis in this session for completeness
+> Review the Example Corp analysis in this session for completeness
 > against our M&A governance checklist. List any claims without source
 > citations.
 

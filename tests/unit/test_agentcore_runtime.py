@@ -96,7 +96,7 @@ class _FakeAgentCoreClient:
             "agentRuntime": {
                 "agentRuntimeId": "rt-xyz789",
                 "agentRuntimeArn": (
-                    "arn:aws:bedrock-agentcore:us-east-1:111111111111:"
+                    "arn:aws:bedrock-agentcore:us-east-1:111122223333:"
                     "runtime/rt-xyz789"
                 ),
                 "status": "CREATING",
@@ -130,7 +130,7 @@ class _FakeAgentCoreClient:
             "agentRuntime": {
                 "agentRuntimeId": kwargs["agentRuntimeId"],
                 "agentRuntimeArn": (
-                    f"arn:aws:bedrock-agentcore:us-east-1:111111111111:"
+                    f"arn:aws:bedrock-agentcore:us-east-1:111122223333:"
                     f"runtime/{kwargs['agentRuntimeId']}"
                 ),
                 "status": self._describe_status,
@@ -154,9 +154,9 @@ def _default_properties(**overrides: Any) -> dict:
     props: dict[str, Any] = {
         "RuntimeName": "mna_supervisor",
         "ImageUri": (
-            "111111111111.dkr.ecr.us-east-1.amazonaws.com/mna-agent:abc123"
+            "111122223333.dkr.ecr.us-east-1.amazonaws.com/mna-agent:abc123"
         ),
-        "RoleArn": "arn:aws:iam::111111111111:role/AgentRuntimeRole",
+        "RoleArn": "arn:aws:iam::111122223333:role/AgentRuntimeRole",
         "Description": "test runtime",
         "NetworkMode": "PUBLIC",
         "EnvironmentVariables": {"MNA_GUARDRAIL_ID": "gr-abc", "MNA_MEMORY_ID": "mem-abc"},
@@ -174,7 +174,7 @@ def _event(
     event: dict[str, Any] = {
         "RequestType": request_type,
         "ResponseURL": "https://cfn-cr-responses.example.com/presigned",
-        "StackId": "arn:aws:cloudformation:us-east-1:111111111111:stack/test/guid",
+        "StackId": "arn:aws:cloudformation:us-east-1:111122223333:stack/test/guid",
         "RequestId": "req-guid",
         "LogicalResourceId": "AgentRuntime",
         "ResourceProperties": properties if properties is not None else _default_properties(),
@@ -246,9 +246,9 @@ class TestCreateSuccess:
         assert call["agentRuntimeName"] == "mna_supervisor"
         assert (
             call["agentRuntimeArtifact"]["containerConfiguration"]["containerUri"]
-            == "111111111111.dkr.ecr.us-east-1.amazonaws.com/mna-agent:abc123"
+            == "111122223333.dkr.ecr.us-east-1.amazonaws.com/mna-agent:abc123"
         )
-        assert call["roleArn"] == "arn:aws:iam::111111111111:role/AgentRuntimeRole"
+        assert call["roleArn"] == "arn:aws:iam::111122223333:role/AgentRuntimeRole"
         assert call["networkConfiguration"]["networkMode"] == "PUBLIC"
         assert call["environmentVariables"]["MNA_GUARDRAIL_ID"] == "gr-abc"
 
@@ -278,7 +278,7 @@ class TestUpdateWithImageChange:
             mock_urlopen.reset_mock()
 
             new_image = (
-                "111111111111.dkr.ecr.us-east-1.amazonaws.com/mna-agent:def456"
+                "111122223333.dkr.ecr.us-east-1.amazonaws.com/mna-agent:def456"
             )
             updated_props = _default_properties(ImageUri=new_image)
             runtime_module.handler(
@@ -316,7 +316,7 @@ class TestUpdateWithImageChange:
             first_id = _captured_body(mock_urlopen)["PhysicalResourceId"]
             mock_urlopen.reset_mock()
 
-            new_role = "arn:aws:iam::111111111111:role/NewAgentRuntimeRole"
+            new_role = "arn:aws:iam::111122223333:role/NewAgentRuntimeRole"
             updated = _default_properties(RoleArn=new_role)
             runtime_module.handler(
                 _event("Update", physical_id=first_id, properties=updated),

@@ -1,8 +1,8 @@
-"""EvaluatorStack - Citation-check Lambda evaluator.
+"""EvaluatorStack - Citation-check AWS Lambda evaluator.
 
 This stack owns the custom evaluator described in the design document
 (section *Infrastructure as Code Design - EvaluatorStack* and
-*Evaluator: Citation Check*). A single Python 3.11 Lambda validates
+*Evaluator: Citation Check*). A single Python 3.11 AWS Lambda function validates
 that every factual claim in an agent response is backed by at least
 one citation, returning a pass/fail result with per-claim detail. The
 result is consumed by the Compliance Validation agent (task 25) and

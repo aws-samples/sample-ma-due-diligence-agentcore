@@ -1,6 +1,6 @@
 """AgentCore Runtime Custom Resource handler.
 
-Manages the lifecycle of a Bedrock AgentCore Runtime resource via the
+Manages the lifecycle of a AWS Bedrock AgentCore Runtime resource via the
 ``bedrock-agentcore-control`` service (``CreateAgentRuntime`` /
 ``UpdateAgentRuntime`` / ``DeleteAgentRuntime``). Used by
 :class:`infra.stacks.agent_stack.AgentStack` whenever the installed

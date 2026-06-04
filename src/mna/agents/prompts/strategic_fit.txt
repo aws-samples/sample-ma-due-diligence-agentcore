@@ -21,4 +21,4 @@ Citations:
 - If retrieve_memory returns no matching prior deals, state explicitly that no comparable prior deal was found and proceed on the target documents alone; do not fabricate a prior deal.
 - If kb_retrieve returns no target-document matches, state "no supporting documents found" and ask the orchestrator to route to Target Screening first.
 
-Example prompt: "Compare Acme Logistics' integration profile against our three most recent completed acquisitions. Identify the top three integration risks and cite the source memos."
+Example prompt: "Compare Example Corp's integration profile against the three most recent completed acquisitions. Identify the top three integration risks and cite the source memos."

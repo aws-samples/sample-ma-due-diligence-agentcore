@@ -28,7 +28,7 @@ Outputs
 
 Example prompt
 --------------
-"Run a DCF on Acme Logistics using the CIM in the knowledge base.
+"Run a DCF on Example Corp using the CIM in the knowledge base.
 Flag any management projection that diverges from historical
 performance by more than 20%, and pull comparable multiples for
 transportation-logistics mid-market."

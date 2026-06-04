@@ -17,7 +17,7 @@ from mna.tools.text_to_sql import (
 )
 
 _CLUSTER_ARN = "arn:aws:rds:us-east-1:123456789012:cluster:mna-aurora"
-_SECRET_ARN = "arn:aws:secretsmanager:us-east-1:123456789012:secret:mna-aurora-creds"
+_SECRET_ARN = "arn:aws:secretsmanager:us-east-1:123456789012:secret:mna-aurora-creds"  # noqa: S105 - test fixture ARN, not a credential
 
 
 def _converse_response(sql: str) -> dict:

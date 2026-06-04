@@ -114,12 +114,12 @@ def _event(
     event: dict[str, Any] = {
         "RequestType": request_type,
         "ResponseURL": "https://cloudformation-custom-resource-response.example.com/presigned",
-        "StackId": "arn:aws:cloudformation:us-east-1:111111111111:stack/test/guid",
+        "StackId": "arn:aws:cloudformation:us-east-1:111122223333:stack/test/guid",
         "RequestId": "req-guid",
         "LogicalResourceId": "BuildWaiter",
         "ResourceProperties": properties or {
             "BuildId": "mna-agent-builder:build-1",
-            "EcrRepositoryUri": "111111111111.dkr.ecr.us-east-1.amazonaws.com/mna-agent",
+            "EcrRepositoryUri": "111122223333.dkr.ecr.us-east-1.amazonaws.com/mna-agent",
             "ImageTag": "abc123def456",
         },
     }
@@ -209,7 +209,7 @@ class TestSuccessPath:
         assert body["Status"] == "SUCCESS"
         assert body["Data"]["BuildStatus"] == "SUCCEEDED"
         assert body["Data"]["ImageUri"] == (
-            "111111111111.dkr.ecr.us-east-1.amazonaws.com/mna-agent:abc123def456"
+            "111122223333.dkr.ecr.us-east-1.amazonaws.com/mna-agent:abc123def456"
         )
         assert body["Data"]["ImageTag"] == "abc123def456"
         assert len(fake_client.calls) == 1
@@ -356,7 +356,7 @@ class TestTimeoutPath:
                     properties={
                         "BuildId": "mna-agent-builder:build-1",
                         "EcrRepositoryUri": (
-                            "111111111111.dkr.ecr.us-east-1.amazonaws.com/mna-agent"
+                            "111122223333.dkr.ecr.us-east-1.amazonaws.com/mna-agent"
                         ),
                         "ImageTag": "abc123def456",
                         # Force a quick timeout — the code clamps to

@@ -83,7 +83,7 @@ if (-not $Force) {
 ================================================================================
 
 This will permanently destroy all CDK stacks created by this sample:
-  - MnaAgentStack       (AgentCore Runtime, Memory, Guardrail, ECR, CodeBuild)
+  - MnaAgentStack       (AgentCore Runtime, Memory, Guardrail, AWS ECR, AWS CodeBuild)
   - MnaGatewayStack     (AgentCore Gateway + market-data Lambda)
   - MnaEvaluatorStack   (citation-check Lambda)
   - MnaDataStack        (Aurora Serverless v2, DynamoDB, S3, Bedrock KB)
@@ -93,11 +93,17 @@ All data in S3, DynamoDB, Aurora, and AgentCore Memory will be deleted.
 
 "@ | Write-Host
 
-    $confirm = Read-Host "Type 'yes' to continue, anything else to abort"
+    $confirm = Read-Host "Type 'yes' to continue, anything else to cancel"
     if ($confirm -ne "yes") {
         Write-Host "Aborted."
         exit 1
     }
+}
+else {
+    # -Force skips the interactive prompt but still surfaces a one-line
+    # data-loss notice so CI logs and automated runs make the destructive
+    # action visible to operators.
+    Write-Step "WARNING: -Force enabled; deleting all data in S3, DynamoDB, Aurora, and AgentCore Memory."
 }
 
 # ---------------------------------------------------------------------------

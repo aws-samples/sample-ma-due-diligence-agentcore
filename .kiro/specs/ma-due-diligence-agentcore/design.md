@@ -1,13 +1,13 @@
-# Design Document
+# M&A Due Diligence Multi-Agent Sample — Design Document
 
 ## Overview
 
-This document describes the technical design for the M&A Due Diligence Multi-Agent sample, implementing the requirements defined in `requirements.md`. The sample is a self-contained, deployable AWS solution that demonstrates a supervisor-plus-specialists agent pattern on Amazon Bedrock AgentCore, grounded in synthetic transportation and logistics M&A data.
+This document describes the technical design for the M&A Due Diligence Multi-Agent sample, implementing the requirements defined in `requirements.md`. The sample is a self-contained, deployable AWS solution that demonstrates a supervisor-plus-specialists agent pattern on AWS Bedrock AgentCore, grounded in synthetic transportation and logistics M&A data.
 
 The design prioritizes three qualities in this order:
 
-1. **Reader experience** — one command to deploy, one command to tear down, notebook as the primary surface.
-2. **Faithfulness to the blog's architecture diagram** — the layers readers see in Figure 1 map to actual resources in the stack.
+1. **Experience** — one command to deploy, one command to tear down, notebook as the primary surface.
+2. **Faithfulness to the blog's architecture diagram** — the layers in Figure 1 map to actual resources in the stack.
 3. **Production-adjacency** — least-privilege IAM, private networking for Aurora, observability on every path, but not over-engineered.
 
 The design assumes Python 3.11+, AWS CDK v2 (Python), and deployment to a single commercial AWS region where Bedrock AgentCore is generally available.
@@ -31,7 +31,7 @@ The design assumes Python 3.11+, AWS CDK v2 (Python), and deployment to a single
                              │ boto3 InvokeAgentRuntime
                              ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    Amazon Bedrock AgentCore Runtime                     │
+│                    AWS Bedrock AgentCore Runtime                     │
 │   ┌───────────────────────────────────────────────────────────────┐     │
 │   │                    Supervisor Agent (Strands)                 │     │
 │   │   Guardrails │ Memory (session) │ Trace (X-Ray) │ CloudWatch  │     │
@@ -201,11 +201,14 @@ All agents use the Strands `Agent` class. Each module exports an `agent` instanc
 **Supervisor (`agents/supervisor.py`)**
 
 ```python
+import os
+
 from strands import Agent
 from strands.models import BedrockModel
 from strands_tools import use_agent  # agents-as-tools pattern
 
 from mna.agents import target_screening, financial_analysis, strategic_fit, compliance_validation
+from mna.agents._base import load_prompt
 
 MODEL_ID = os.getenv("MNA_SUPERVISOR_MODEL", "anthropic.claude-sonnet-4-5-v1:0")
 
@@ -287,6 +290,10 @@ Implemented twice (local for fast testing, Lambda for integration):
 **Local (`evaluators/citation_check.py`)**
 
 ```python
+from mna.types import Citation, EvaluationResult
+from mna.evaluators.citation_check import extract_claims
+
+
 def check_citations(response_text: str, citations: list[Citation]) -> EvaluationResult:
     claims = extract_claims(response_text)  # sentence-level split + numeric detection
     unsupported = [c for c in claims if not any(cite.supports(c) for cite in citations)]
@@ -430,7 +437,7 @@ CDK v2 Python stacks, deployed in dependency order:
 
 ### Container Build Pipeline (No Local Docker Required)
 
-AgentCore Runtime requires an ARM64 Linux container image in ECR. To honor the "no Docker on the reader's machine" requirement (NFR-RT-4), all container builds happen in AWS CodeBuild. This mirrors the pattern used by the FAST template.
+AgentCore Runtime requires an ARM64 Linux container image in ECR. To honor the "no Docker on your machine" requirement (NFR-RT-4), all container builds happen in AWS CodeBuild. This mirrors the pattern used by the FAST template.
 
 Components (created inside `AgentStack` or a small `BuildStack` that `AgentStack` depends on):
 
@@ -459,11 +466,11 @@ Flow on each `deploy.ps1` / `deploy.sh` run:
 4. Waiter Lambda polls until build succeeds.
 5. CDK creates or updates the AgentCore Runtime with the new image URI.
 
-The reader never runs `docker build`. Their local machine only needs AWS CLI, Node.js, and Python.
+You never run `docker build`. Your local machine only needs AWS CLI, Node.js, and Python.
 
 ### Custom Resources Inventory
 
-CloudFormation Custom Resources (CRs) are used wherever CloudFormation does not yet ship a native resource type for an operation we need, or where an asynchronous/imperative action must complete during stack creation. This design requires 6–8 CRs depending on CloudFormation and CDK support for Amazon Bedrock AgentCore at implementation time.
+CloudFormation Custom Resources (CRs) are used wherever CloudFormation does not yet ship a native resource type for an operation we need, or where an asynchronous/imperative action must complete during stack creation. This design requires 6–8 CRs depending on CloudFormation and CDK support for AWS Bedrock AgentCore at implementation time.
 
 | # | Custom Resource | Stack | Wraps | Always required? |
 |---|---|---|---|---|
@@ -633,7 +640,7 @@ These four prompts drive the notebook and `prompts.md`:
 
 ## Platform Support
 
-The sample is designed to run on Windows 10/11, macOS, and Linux. No Docker, WSL, or container runtime is required on the reader's machine.
+The sample is designed to run on Windows 10/11, macOS, and Linux. No Docker, WSL, or container runtime is required on your machine.
 
 ### Reader Machine Prerequisites
 
@@ -652,10 +659,10 @@ Not required: Docker, WSL, buildx, QEMU, Git Bash (PowerShell scripts are native
 - **Paths** — CDK Python code and `generate.py` use `pathlib.Path`; no hardcoded forward slashes.
 - **Scripts** — both `deploy.ps1`/`cleanup.ps1` (Windows) and `deploy.sh`/`cleanup.sh` (macOS/Linux) are shipped. Feature parity is enforced by a CI matrix covering both.
 - **Line endings** — repo `.gitattributes` forces LF for `.sh` and `.py`, CRLF for `.ps1`, preventing execution failures on Windows clones.
-- **Virtual environment** — deploy scripts create a `.venv` via `python -m venv`, activate it with the platform-correct command, and install dependencies there. Prevents polluting the reader's global Python.
-- **CodeBuild handles the container** — see "Container Build Pipeline" above. Reader's platform architecture (x86 vs ARM) is irrelevant; the build targets ARM64 inside AWS.
+- **Virtual environment** — deploy scripts create a `.venv` via `python -m venv`, activate it with the platform-correct command, and install dependencies there. Prevents polluting your global Python.
+- **CodeBuild handles the container** — see "Container Build Pipeline" above. Your platform architecture (x86 vs ARM) is irrelevant; the build targets ARM64 inside AWS.
 - **PDF generation** — ReportLab is pure Python and ships wheels for all three platforms.
-- **psycopg2 or psycopg** — the agent runtime container uses `psycopg[binary]`; the reader's data-generator script uses the RDS Data API (no driver needed on the reader's machine).
+- **psycopg2 or psycopg** — the agent runtime container uses `psycopg[binary]`; the data-generator script uses the RDS Data API (no driver needed on your machine).
 
 ### Windows-Specific Acceptance Test
 
@@ -784,7 +791,7 @@ Cost controls:
 - **prompts.md** — the four example prompts with expected output characteristics.
 - **Per-agent module docstrings** — role, tools, example prompt, known limitations.
 - **CONTRIBUTING.md** — how to add a new agent, how to add a new tool, code style, PR process.
-- **Companion blog post references** — inline links where the reader can dive deeper on AgentCore, Strands, Knowledge Bases.
+- **Companion blog post references** — inline links where you can dive deeper on AgentCore, Strands, Knowledge Bases.
 
 ## Open Questions and Future Work
 

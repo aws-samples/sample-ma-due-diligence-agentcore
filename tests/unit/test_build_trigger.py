@@ -97,7 +97,7 @@ class _FakeCodeBuildClient:
         return self._response or {
             "build": {
                 "id": "mna-agent-builder:build-1",
-                "arn": "arn:aws:codebuild:us-east-1:111111111111:build/mna-agent-builder:build-1",
+                "arn": "arn:aws:codebuild:us-east-1:111122223333:build/mna-agent-builder:build-1",
                 "buildStatus": "IN_PROGRESS",
             },
         }
@@ -120,12 +120,12 @@ def _event(
     event: dict[str, Any] = {
         "RequestType": request_type,
         "ResponseURL": "https://cloudformation-custom-resource-response.example.com/presigned",
-        "StackId": "arn:aws:cloudformation:us-east-1:111111111111:stack/test/guid",
+        "StackId": "arn:aws:cloudformation:us-east-1:111122223333:stack/test/guid",
         "RequestId": "req-guid",
         "LogicalResourceId": "BuildTrigger",
         "ResourceProperties": properties or {
             "ProjectName": "mna-agent-builder",
-            "EcrRepositoryUri": "111111111111.dkr.ecr.us-east-1.amazonaws.com/mna-agent",
+            "EcrRepositoryUri": "111122223333.dkr.ecr.us-east-1.amazonaws.com/mna-agent",
             "ImageTag": "abc123def456",
             "SourceVersion": "abc123def456",
         },
@@ -191,7 +191,7 @@ class TestCreateSuccess:
         assert body["Data"]["ImageTag"] == "abc123def456"
         assert (
             body["Data"]["EcrRepositoryUri"]
-            == "111111111111.dkr.ecr.us-east-1.amazonaws.com/mna-agent"
+            == "111122223333.dkr.ecr.us-east-1.amazonaws.com/mna-agent"
         )
 
         # StartBuild got the project name and the env-var overrides.
@@ -202,7 +202,7 @@ class TestCreateSuccess:
             entry["name"]: entry["value"] for entry in call["environmentVariablesOverride"]
         }
         assert env_overrides["ECR_REPOSITORY_URI"] == (
-            "111111111111.dkr.ecr.us-east-1.amazonaws.com/mna-agent"
+            "111122223333.dkr.ecr.us-east-1.amazonaws.com/mna-agent"
         )
         assert env_overrides["IMAGE_TAG"] == "abc123def456"
         assert env_overrides["SOURCE_VERSION"] == "abc123def456"

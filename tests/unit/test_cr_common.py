@@ -100,7 +100,7 @@ def _event(
     event: dict[str, Any] = {
         "RequestType": request_type,
         "ResponseURL": "https://cloudformation-custom-resource-response.example.com/presigned",
-        "StackId": "arn:aws:cloudformation:us-east-1:111111111111:stack/test/guid",
+        "StackId": "arn:aws:cloudformation:us-east-1:111122223333:stack/test/guid",
         "RequestId": "req-guid",
         "LogicalResourceId": "MyCustomResource",
         "ResourceProperties": properties or {},

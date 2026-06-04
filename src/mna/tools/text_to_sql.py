@@ -11,7 +11,7 @@ and Interfaces" → "Tools" → ``tools/text_to_sql.py``:
    ``requirements.txt``) and use a conservative string-based check
    instead: comment stripping + first-keyword check + rejection of any
    mutating or DDL keyword as a whole word anywhere in the body.
-3. Execute the validated SQL through the RDS Data API so no persistent
+3. Run the validated SQL through the Amazon RDS Data API so no persistent
    DB connection is held by the agent runtime.
 
 The generated SQL is returned in the response envelope and logged so

@@ -1,10 +1,10 @@
 """AgentStack - AgentCore Runtime, Memory, Guardrail, and build pipeline.
 
-Task 11 populated this stack with the container build pipeline (ECR
-repository, S3 source asset, CodeBuild project, and the build +
-waiter Custom Resources). Task 13 layers on:
+Task 11 populated this stack with the container build pipeline (Amazon
+ECR repository, AWS S3 source asset, AWS CodeBuild project, and the
+build + waiter Custom Resources). Task 13 layers on:
 
-* a Bedrock Guardrail (harmful-content filters + financial-advice
+* an Bedrock Guardrail (harmful-content filters + financial-advice
   denial topic) via the native ``aws_bedrock.CfnGuardrail`` L1;
 * an AgentCore Memory resource (native L1 if ``cdk-lib`` ships one,
   else a Custom Resource backed by ``lambda/agentcore_memory``);
@@ -23,7 +23,7 @@ Build Pipeline*, *Custom Resources Inventory*, and *Security Design
 
 Requirements implemented by this stack:
 
-* **1.4** The agent runtime is hosted on Amazon Bedrock AgentCore
+* **1.4** The agent runtime is hosted on AWS Bedrock AgentCore
   Runtime (native or CR-managed).
 * **2.3** / **2.4** AgentCore Memory is provisioned and its
   ``prior_deals`` namespace is seeded so the Strategic Fit agent has
@@ -574,6 +574,11 @@ class AgentStack(Stack):
         #    AgentCore Runtime fetches the container image from ECR on
         #    startup. The role needs pull-layer permissions scoped to
         #    the repository created by the build pipeline.
+        #
+        # ``ecr:GetAuthorizationToken`` is an account-level action and
+        # requires ``Resource="*"`` per AWS IAM documentation — it has
+        # no resource-level permissions. The repository-scoped pull
+        # actions below carry the actual access boundary.
         self.agent_runtime_role.add_to_policy(
             iam.PolicyStatement(
                 sid="EcrTokenForImagePull",
@@ -819,6 +824,9 @@ class AgentStack(Stack):
         # ``bedrock-agentcore:*``. IAM evaluates the AgentCore control
         # plane under the ``bedrock-agentcore:`` prefix even though
         # the boto3 client is named ``bedrock-agentcore-control``.
+        # Resources are scoped to the named Memory in this account+region
+        # plus the wildcard pattern used at Create-time when the ARN
+        # does not yet exist.
         memory_function.add_to_role_policy(
             iam.PolicyStatement(
                 sid="AgentCoreMemoryControl",
@@ -830,10 +838,14 @@ class AgentStack(Stack):
                     "bedrock-agentcore:GetMemory",
                     "bedrock-agentcore:ListMemories",
                 ],
-                resources=["*"],
+                resources=[
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:memory/{_MEMORY_NAME}",
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:memory/*",
+                ],
             ),
         )
         # Data-plane ``CreateEvent`` is how the CR seeds each namespace.
+        # Scoped to the Memory resource for this stack.
         memory_function.add_to_role_policy(
             iam.PolicyStatement(
                 sid="AgentCoreMemorySeedEvents",
@@ -841,7 +853,10 @@ class AgentStack(Stack):
                 actions=[
                     "bedrock-agentcore:CreateEvent",
                 ],
-                resources=["*"],
+                resources=[
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:memory/{_MEMORY_NAME}",
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:memory/*",
+                ],
             ),
         )
 
@@ -948,7 +963,8 @@ class AgentStack(Stack):
         # Control-plane permissions for the CR Lambda. The handler
         # needs to create/update/describe/delete the runtime; it also
         # needs ``iam:PassRole`` to hand the agent runtime role to the
-        # AgentCore service.
+        # AgentCore service. Resources are scoped to the named runtime
+        # plus the endpoint pattern under it.
         runtime_function.add_to_role_policy(
             iam.PolicyStatement(
                 sid="AgentCoreRuntimeControl",
@@ -971,7 +987,11 @@ class AgentStack(Stack):
                     "bedrock-agentcore:GetAgentRuntimeEndpoint",
                     "bedrock-agentcore:ListAgentRuntimeEndpoints",
                 ],
-                resources=["*"],
+                resources=[
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:agent-runtime/{_RUNTIME_NAME}",
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:agent-runtime/*",
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:agent-runtime-endpoint/*",
+                ],
             ),
         )
         # Workload-identity permissions. AgentCore provisions an
@@ -980,6 +1000,7 @@ class AgentStack(Stack):
         # this the runtime provisioning fails with "Failed to create
         # runtime dependencies" and a terminal FAILED status. Same
         # pattern as the Gateway CR (see gateway_stack.py).
+        # Scoped to account+region.
         runtime_function.add_to_role_policy(
             iam.PolicyStatement(
                 sid="AgentCoreRuntimeWorkloadIdentity",
@@ -991,7 +1012,9 @@ class AgentStack(Stack):
                     "bedrock-agentcore:DeleteWorkloadIdentity",
                     "bedrock-agentcore:ListWorkloadIdentities",
                 ],
-                resources=["*"],
+                resources=[
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:workload-identity/*",
+                ],
             ),
         )
         runtime_function.add_to_role_policy(

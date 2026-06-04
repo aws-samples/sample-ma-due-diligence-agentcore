@@ -56,7 +56,7 @@ class TestParser:
 class TestInvokeCommand:
     def _fake_response(self) -> AgentResponse:
         return AgentResponse(
-            text="Acme Logistics shows 12% YoY growth.",
+            text="Example Corp shows 12% YoY growth.",
             citations=[
                 Citation(
                     text="Revenue grew 12% YoY in 2023.",
@@ -90,7 +90,7 @@ class TestInvokeCommand:
             "target_screening", "Screen our pipeline", session_id="sess-cli-1"
         )
         captured = capsys.readouterr().out
-        assert "Acme Logistics shows 12% YoY growth." in captured
+        assert "Example Corp shows 12% YoY growth." in captured
         # Both citations should be rendered with their source.
         assert "s3://mna-docs/cims/acme.pdf" in captured
         # The first citation has a page and a score; both should appear.
@@ -105,12 +105,12 @@ class TestInvokeCommand:
     ) -> None:
         with patch("cli.invoke.invoke_agent", return_value=self._fake_response()):
             exit_code = main(
-                ["--json", "invoke", "supervisor", "Run DCF on Acme Logistics"]
+                ["--json", "invoke", "supervisor", "Run DCF on Example Corp"]
             )
 
         assert exit_code == 0
         payload = json.loads(capsys.readouterr().out)
-        assert payload["text"].startswith("Acme Logistics")
+        assert payload["text"].startswith("Example Corp")
         assert payload["trace_id"] == _TRACE_ID
         assert len(payload["citations"]) == 2
         assert payload["citations"][0]["source"] == "s3://mna-docs/cims/acme.pdf"
@@ -226,13 +226,13 @@ class TestEvaluateCommand:
     ) -> None:
         response_file = tmp_path / "response.txt"
         response_file.write_text(
-            "Acme Logistics grew revenue 12% in 2023.", encoding="utf-8"
+            "Example Corp grew revenue 12% in 2023.", encoding="utf-8"
         )
         citations_file = self._write_citations(
             tmp_path,
             [
                 {
-                    "text": "Acme Logistics grew revenue 12% in 2023 "
+                    "text": "Example Corp grew revenue 12% in 2023 "
                     "across all service lines.",
                     "source": "s3://mna-docs/cims/acme.pdf",
                     "page": 4,
@@ -260,14 +260,14 @@ class TestEvaluateCommand:
     ) -> None:
         response_file = tmp_path / "response.txt"
         response_file.write_text(
-            "Acme Logistics employs 5000 drivers nationwide.",
+            "Example Corp employs 5000 drivers nationwide.",
             encoding="utf-8",
         )
         citations_file = self._write_citations(
             tmp_path,
             [
                 {
-                    "text": "Bluewave Freight operates in the Pacific Northwest only.",
+                    "text": "AnyCompany Freight operates in the Pacific Northwest only.",
                     "source": "s3://mna-docs/cims/bluewave.pdf",
                 }
             ],
@@ -301,7 +301,7 @@ class TestEvaluateCommand:
             ],
         )
 
-        stdin = io.StringIO("Acme Logistics grew revenue 12% in 2023.\n")
+        stdin = io.StringIO("Example Corp grew revenue 12% in 2023.\n")
         exit_code = main(
             [
                 "evaluate",

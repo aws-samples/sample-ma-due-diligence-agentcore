@@ -1,13 +1,13 @@
 # M&A Due Diligence Multi-Agent Sample
 
 A self-contained AWS sample that demonstrates a supervisor-plus-specialists
-agent pattern on [Amazon Bedrock AgentCore](https://docs.aws.amazon.com/bedrock-agentcore/)
+agent pattern on [AWS Bedrock AgentCore](https://docs.aws.amazon.com/bedrock-agentcore/)
 using the [Strands Agents SDK](https://strandsagents.com/). The sample
 models an end-to-end M&A due-diligence workflow in the transportation
 and logistics industry, grounded entirely in synthetic data.
 
 This sample accompanies a companion AWS Machine Learning blog post
-(link pending publication). It is optimised for three things, in order:
+(coming soon). It is optimised for three things, in order:
 
 1. **Reader experience** — one command to deploy, one command to tear
    down, a Jupyter notebook as the primary interactive surface.
@@ -45,18 +45,18 @@ This sample accompanies a companion AWS Machine Learning blog post
 ## Overview
 
 The sample deploys one supervisor agent and four specialist agents on
-Amazon Bedrock AgentCore Runtime. The supervisor is a Strands `Agent`
+AWS Bedrock AgentCore Runtime. The supervisor is a Strands `Agent`
 that uses the agents-as-tools pattern to route each prompt to one or
 more specialists:
 
 | Agent | Role | Primary tool(s) |
 |---|---|---|
-| Target Screening | Translate natural language into SQL and surface candidates from a target-company table. | Text-to-SQL over Amazon Aurora PostgreSQL + Bedrock Knowledge Base |
-| Financial Analysis | Run a DCF and pull comparable-company multiples with inline citations on every numeric input. | Bedrock Knowledge Base + AgentCore Gateway-backed market-data tool |
-| Strategic Fit | Compare the current target against prior deals stored in long-term memory. | Bedrock Knowledge Base + AgentCore Memory (`prior_deals` namespace) |
-| Compliance Validation | Audit a response against the M&A governance checklist and flag any uncited claim. | Bedrock Knowledge Base + custom citation-check evaluator Lambda |
+| Target Screening | Translate natural language into SQL and surface candidates from a target-company table. | Text-to-SQL over AWS Aurora (PostgreSQL) + Bedrock Knowledge Bases |
+| Financial Analysis | Run a DCF and pull comparable-company multiples with inline citations on every numeric input. | Bedrock Knowledge Bases + AgentCore Gateway-backed market-data tool |
+| Strategic Fit | Compare the current target against prior deals stored in long-term memory. | Bedrock Knowledge Bases + AgentCore Memory (`prior_deals` namespace) |
+| Compliance Validation | Audit a response against the M&A governance checklist and flag any uncited claim. | Bedrock Knowledge Bases + custom citation-check evaluator AWS Lambda |
 
-Every response is routed through a Bedrock Guardrail, every factual
+Every response is routed through Bedrock Guardrails, every factual
 claim is required to cite a source, and every invocation produces a
 CloudWatch log stream plus an X-Ray trace that captures the
 supervisor → specialist → tool call hierarchy.
@@ -85,8 +85,9 @@ the canonical layer mapping is in the table at
                  │      └── Compliance Valid.  (kb + citation_check) │
                  └───────────────────────────────────────────────────┘
                           |               |             |
-                   Aurora Serverless   Bedrock KB   AgentCore Gateway
-                   (pgvector + SQL)      (S3)       → market-data λ
+                   AWS Aurora      AWS Bedrock    AgentCore Gateway
+                   Serverless v2      Knowledge Bases   → market-data λ
+                   (pgvector + SQL)   (S3)
 ```
 
 Infrastructure-as-Code is AWS CDK v2 (Python). Stacks deploy in this
@@ -113,7 +114,7 @@ for the full flow.
 
 | Tool | Version | Windows | macOS | Linux |
 |---|---|---|---|---|
-| AWS account | n/a | Bedrock model access enabled for Anthropic Claude and Amazon Nova | same | same |
+| AWS account | n/a | Bedrock model access enabled for Anthropic Claude and Amazon Titan | same | same |
 | AWS CLI | v2.15+ | MSI installer | `brew install awscli` | distribution package / pip |
 | Python | 3.11+ | [python.org](https://www.python.org/downloads/) installer | `brew install python@3.11` | distribution package / pyenv |
 | Node.js | 20+ | [nodejs.org](https://nodejs.org/) installer | `brew install node` | distribution package / nvm |
@@ -123,7 +124,7 @@ for the full flow.
 You do **not** need Docker, WSL, buildx, or Git Bash. The agent image
 is built in AWS CodeBuild. The PowerShell scripts are native.
 
-Supported AWS regions (Bedrock AgentCore GA):
+Supported AWS regions (AWS Bedrock AgentCore GA):
 
 - `us-east-1`
 - `us-west-2`
@@ -132,7 +133,7 @@ Supported AWS regions (Bedrock AgentCore GA):
 
 `scripts/check_region.sh` / `check_region.ps1` enforces this list at
 deploy time. See the authoritative list in the
-[AgentCore regions documentation](https://docs.aws.amazon.com/general/latest/gr/bedrock-agentcore.html).
+[AgentCore regions documentation](https://docs.aws.amazon.com/general/latest/gr/bedrock_agentcore.html).
 
 ---
 
@@ -164,7 +165,7 @@ The deploy script will:
    verification step.
 7. Print next-steps instructions.
 
-First-time deploys take about 20-25 minutes (Aurora Serverless v2 is
+First-time deploys take about 20-25 minutes (AWS Aurora Serverless v2 is
 the long pole). Re-deploys take a few minutes.
 
 Skip flags for re-runs:
@@ -187,16 +188,16 @@ and exercises a distinct capability of the architecture:
 mna list-agents
 
 # Supervisor orchestration — the LLM routes to one or more specialists
-mna invoke supervisor "Screen our mid-market logistics targets with revenue 100M-500M, then run a DCF on the top hit." --session-id walkthrough-session-00000000-0001
+mna invoke supervisor "Screen the mid-market logistics targets with revenue 100M-500M, then run a DCF on the top hit." --session-id walkthrough-session-00000000-0001
 
 # Target Screening — text-to-SQL on Aurora + KB narrative enrichment
-mna invoke target_screening "Screen our target pipeline for transportation companies with revenue between 100M and 500M USD, EBITDA margin above 12%, and fleet size above 200. Surface the top three and tell me what the CIM says about the leader's growth trajectory." --session-id walkthrough-session-00000000-0001
+mna invoke target_screening "Screen the target pipeline for transportation companies with revenue between 100M and 500M USD, EBITDA margin above 12%, and fleet size above 200. Surface the top three and tell me what the CIM says about the leader's growth trajectory." --session-id walkthrough-session-00000000-0001
 
 # Financial Analysis — KB retrieval + AgentCore Gateway tool (market data)
-mna invoke financial_analysis "Run a DCF on Acme Logistics using the CIM in the knowledge base. Flag any management projection that diverges from historical performance by more than 20%, and pull comparable multiples for transportation-logistics mid-market." --session-id walkthrough-session-00000000-0001
+mna invoke financial_analysis "Run a DCF on Example Corp using the CIM in the knowledge base. Flag any management projection that diverges from historical performance by more than 20%, and pull comparable multiples for transportation-logistics mid-market." --session-id walkthrough-session-00000000-0001
 
 # Strategic Fit — AgentCore Memory long-term retrieval (prior_deals namespace)
-mna invoke strategic_fit "Compare Acme Logistics' integration profile against our three most recent completed acquisitions. Identify the top three integration risks and cite the source memos." --session-id walkthrough-session-00000000-0001
+mna invoke strategic_fit "Compare Example Corp' integration profile against the three most recent completed acquisitions. Identify the top three integration risks and cite the source memos." --session-id walkthrough-session-00000000-0001
 ```
 
 Copy the full prompt text from [`prompts.md`](./prompts.md) for the
@@ -207,7 +208,7 @@ value into `mna trace` to inspect the X-Ray trace for that specific
 invocation:
 
 ```bash
-mna invoke financial_analysis "Run a DCF on Acme Logistics."
+mna invoke financial_analysis "Run a DCF on Example Corp."
 # footer: ... | session_id=demo | trace_id=1-abcd1234-ef567890
 mna trace 1-abcd1234-ef567890
 ```
@@ -219,7 +220,7 @@ specialist's output for unsupported factual claims.
 **Step 1 — capture a specialist response in JSON mode:**
 
 ```bash
-mna --json invoke financial_analysis "Run a DCF on Acme Logistics using the CIM." > run.json
+mna --json invoke financial_analysis "Run a DCF on Example Corp using the CIM." > run.json
 ```
 
 Note: `--json` goes before the subcommand. Log lines go to stderr
@@ -298,7 +299,7 @@ exists.
 
 | Layer | Implemented in v1 | Extension |
 |---|---|---|
-| Presentation | Jupyter notebook + argparse CLI | React frontend, Amazon Cognito, CloudFront (see the [FAST template](https://github.com/awslabs/fast)) |
+| Presentation | Jupyter notebook + argparse CLI | React frontend, Amazon Cognito, Amazon CloudFront (see the [FAST template](https://github.com/awslabs/fast)) |
 | Agent Orchestration — Runtime | AgentCore Runtime hosting Strands supervisor + 4 specialists | Multi-tenant runtime isolation |
 | Agent Orchestration — Strands SDK | Python Strands `Agent` per role; supervisor uses `use_agent` pattern | Non-Strands agent frameworks |
 | Agent Orchestration — Memory | AgentCore Memory (session + `prior_deals` namespace) | Cross-account Memory sharing |
@@ -306,9 +307,9 @@ exists.
 | Agent Orchestration — Identity | — | AgentCore Identity with JWT validation flows |
 | Agent Orchestration — Gateway | One Lambda-backed MCP tool | Additional Gateway targets (HTTP APIs, MCP servers, API Gateway) |
 | Agent Orchestration — Observability | CloudWatch Logs + X-Ray on every invocation | Dashboards, alarms, anomaly detection |
-| Data — Aurora PostgreSQL | Serverless v2 (0.5-2 ACU), target-companies schema, text-to-SQL | Read replicas, multi-region |
-| Data — DynamoDB | `mna-sessions` per-turn audit log (prompt, response, citations, trace id, evaluator result) with 7-day TTL | Global tables |
-| Data — Bedrock KB | Synthetic CIMs, financials, press packs, governance checklist | Cross-account KBs, document-level ACLs |
+| Data — AWS Aurora PostgreSQL | Serverless v2 (0.5-2 ACU), target-companies schema, text-to-SQL | Read replicas, multi-region |
+| Data — AWS DynamoDB | `mna-sessions` per-turn audit log (prompt, response, citations, trace id, evaluator result) with 7-day TTL | Global tables |
+| Data — Bedrock Knowledge Bases | Synthetic CIMs, financials, press packs, governance checklist | Cross-account KBs, document-level ACLs |
 | Data — S3 | Documents bucket (block public, SSE-S3, versioned) | SSE-KMS with CMK, Object Lock |
 | Gateway Targets — Lambda | One market-data mock Lambda | Additional tools (HTTP APIs, third-party APIs, SaaS connectors) |
 | Evaluation — Custom evaluator | Citation-check Lambda + local mirror | AgentCore Evaluations, LLM-as-judge, continuous monitoring |
@@ -328,7 +329,7 @@ hour of wall time).
 | Aurora Serverless v2 | ~$0.12 | 1 hour at 0.5 ACU minimum |
 | AgentCore Runtime | ~$0.30 | ~5 minutes of active compute across the four prompts |
 | Bedrock (Claude Sonnet 4.5 + Haiku + Titan Embed) | ~$1.00 | 4 prompts + embedding ingestion |
-| Bedrock Knowledge Base (vector ops) | ~$0.20 | Serverless pricing |
+| Bedrock Knowledge Bases (vector ops) | ~$0.20 | Serverless pricing |
 | DynamoDB | <$0.01 | On-demand, minimal writes |
 | Lambda (evaluator + market-data + build waiter) | <$0.01 | Free tier |
 | CodeBuild (ARM64 Linux) | <$0.05 | ~5 min per deploy; free tier covers first 100 min/month |
@@ -355,7 +356,7 @@ Cost controls baked into the sample:
 | `AgentRuntimeRole` | AgentCore Runtime | `bedrock:InvokeModel`, `bedrock-agent-runtime:Retrieve`, RDS Data API (read-only on `mna.target_companies`), DynamoDB `mna-sessions` RW, AgentCore Memory RW, Gateway invoke, citation-check Lambda invoke |
 | `EvaluatorLambdaRole` | Lambda service | CloudWatch Logs only |
 | `MarketDataLambdaRole` | Lambda service | CloudWatch Logs only |
-| `KnowledgeBaseRole` | Bedrock KB service | S3 read (documents bucket), Aurora pgvector write |
+| `KnowledgeBaseRole` | Bedrock Knowledge Bases service | S3 read (documents bucket), Aurora pgvector write |
 | `BuildTriggerRole` / `BuildWaiterRole` | Lambda service | CodeBuild start/describe, CloudWatch Logs |
 | Deployment role | Reader's own AWS credentials | CloudFormation + the underlying CDK bootstrap |
 
@@ -366,6 +367,10 @@ invoke any model ID the supervisor/specialists are configured to use.
 ---
 
 ## Cleanup
+
+> ⚠️ **Warning:** Cleanup permanently deletes all data in AWS S3,
+> AWS DynamoDB, AWS Aurora, and AWS Bedrock AgentCore Memory.
+> Export anything you need to retain before proceeding.
 
 ```bash
 ./cleanup.sh
@@ -397,13 +402,13 @@ every sweep.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `check_region.*` exits non-zero: "region not supported" | Current AWS region is not GA for AgentCore. | Set `AWS_REGION` or `aws configure set region` to one of the supported regions listed above. |
-| `check_bedrock_access.*` exits non-zero: "model access not enabled" | Anthropic Claude or Amazon Nova model access is not enabled for the account/region. | Open the [Bedrock model access console](https://console.aws.amazon.com/bedrock/home#/modelaccess) and enable access to the Claude family (Sonnet 4.5 + Haiku) and Amazon Titan Embed. |
+| `check_bedrock_access.*` exits non-zero: "model access not enabled" | Anthropic Claude or Amazon Titan model access is not enabled for the account/region. | Open the [Bedrock model access console](https://console.aws.amazon.com/bedrock/home#/modelaccess) and enable access to the Claude family (Sonnet 4.5 + Haiku) and Amazon Titan Embed. |
 | `cdk bootstrap` fails with "AccessDenied on s3:PutBucketPublicAccessBlock" | Your caller identity lacks bootstrap permissions. | Use credentials with `AdministratorAccess` for the first bootstrap; downgrade afterwards. |
 | `cdk deploy` fails on AgentStack with "CodeBuild build failed" | The agent image could not be built. Usually a Docker Hub rate-limit or a dependency-resolution error. | Re-run `deploy.sh` — the build trigger re-attempts. If it fails twice, open the CloudWatch log group `/aws/codebuild/mna-agent-builder`. |
 | `cdk deploy` on AgentStack hangs for >15 minutes after "Build started" | Build waiter polling timed out. | Re-run `deploy.sh`. A cold CodeBuild start plus a cold Aurora provision can push the first deploy close to the waiter cap. |
 | `cdk deploy` fails on DataStack with "Aurora cluster creation timed out" | Aurora Serverless v2 provisioning can exceed 20 minutes in heavily-used regions. | Re-run `deploy.sh` — the stack resumes from the last successful resource. |
 | `generate.py --seed-all` fails with "ingestion job failed" | A KB document could not be parsed or embedded. | `generate.py` prints the failing document IDs; remove them from the generator seed list and re-run. |
-| Agent invocation returns "no supporting documents found" | The KB ingestion job hadn't completed when the prompt ran. | Wait 2-3 minutes after `generate.py` finishes, then re-run the prompt. The ingestion job's status is in the Bedrock KB console. |
+| Agent invocation returns "no supporting documents found" | The KB ingestion job hadn't completed when the prompt ran. | Wait 2-3 minutes after `generate.py` finishes, then re-run the prompt. The ingestion job's status is in the Bedrock Knowledge Bases console. |
 | Notebook trace cell returns "(not yet indexed)" | X-Ray trace indexing lag (a few seconds after the invocation). | Re-run the cell. The `mna.client.get_last_trace` helper already retries with backoff. |
 | `cleanup.sh` succeeds but S3 bucket still exists | The S3 bucket had versioned objects that the default cleanup did not delete. | Run `aws s3 rb s3://<bucket-name> --force`, or empty the bucket first via the console. |
 | Windows PowerShell: "running scripts is disabled on this system" | PowerShell execution policy is Restricted. | Run `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` once, then re-run `.\deploy.ps1`. |
@@ -417,10 +422,10 @@ the full output.
 
 ## Documentation and references
 
-- [Companion AWS Machine Learning blog post](https://aws.amazon.com/blogs/machine-learning/) — link added once published.
-- [Amazon Bedrock AgentCore documentation](https://docs.aws.amazon.com/bedrock-agentcore/)
+- Companion AWS Machine Learning blog post — _Coming Soon._ A link will be added here once the post is published.
+- [AWS Bedrock AgentCore documentation](https://docs.aws.amazon.com/bedrock-agentcore/)
 - [Strands Agents SDK documentation](https://strandsagents.com/)
-- [Amazon Bedrock Knowledge Bases documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html)
+- [Knowledge Bases for Amazon Bedrock documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html)
 - [Bedrock Guardrails documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html)
 - [AWS Samples — other AgentCore and Strands examples](https://github.com/aws-samples)
 

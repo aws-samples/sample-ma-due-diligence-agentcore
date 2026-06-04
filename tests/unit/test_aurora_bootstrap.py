@@ -107,10 +107,10 @@ def _fake_boto3_module(rds_client: _FakeRdsDataClient):
 
 
 _CLUSTER_ARN = (
-    "arn:aws:rds:us-east-1:111111111111:cluster:mna-auroracluster-abc123"
+    "arn:aws:rds:us-east-1:111122223333:cluster:mna-auroracluster-abc123"
 )
-_SECRET_ARN = (
-    "arn:aws:secretsmanager:us-east-1:111111111111:secret:mna/aurora/admin-xyz"
+_SECRET_ARN = (  # noqa: S105 - test fixture ARN, not a credential
+    "arn:aws:secretsmanager:us-east-1:111122223333:secret:mna/aurora/admin-xyz"
 )
 
 
@@ -151,7 +151,7 @@ def _event(
     event: dict[str, Any] = {
         "RequestType": request_type,
         "ResponseURL": "https://cloudformation-custom-resource-response.example.com/presigned",
-        "StackId": "arn:aws:cloudformation:us-east-1:111111111111:stack/test/guid",
+        "StackId": "arn:aws:cloudformation:us-east-1:111122223333:stack/test/guid",
         "RequestId": "req-guid",
         "LogicalResourceId": "AuroraBootstrap",
         "ResourceProperties": properties if properties is not None else _default_properties(),

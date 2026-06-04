@@ -3,7 +3,7 @@
 Role
 ----
 Surfaces candidate transportation and logistics acquisition targets
-from the structured target-company database (Amazon Aurora PostgreSQL
+from the structured target-company database (AWS Aurora PostgreSQL
 Serverless v2) and enriches the top hits with narrative context from
 the Bedrock Knowledge Base. This specialist is the primary reader of
 the ``mna.target_companies`` table.

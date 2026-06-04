@@ -4,7 +4,7 @@ Three subcommands plus a ``--seed-all`` orchestrator wire together the
 three data stores the sample exercises:
 
 * ``companies``  — 25 fictional transportation/logistics targets inserted
-  into Amazon Aurora PostgreSQL via the RDS Data API.
+  into AWS Aurora PostgreSQL via the RDS Data API.
 * ``documents``  — CIM, financial statements, and press-release packs for
   the three spotlight companies, uploaded to S3 and indexed into the
   Bedrock Knowledge Base.
@@ -163,7 +163,7 @@ class PriorDealSeed:
 #: can benchmark both successes and failures.
 PRIOR_DEALS: tuple[PriorDealSeed, ...] = (
     PriorDealSeed(
-        memo_id="prior_deal_northwind_2022",
+        memo_id="prior_deal_anycompany_express_2022",
         target_name="Northwind Express",
         close_year=2022,
         deal_size_usd=420_000_000,
@@ -176,7 +176,7 @@ PRIOR_DEALS: tuple[PriorDealSeed, ...] = (
         integration_duration_months=20,
     ),
     PriorDealSeed(
-        memo_id="prior_deal_pinnacle_2021",
+        memo_id="prior_deal_example_freight_2021",
         target_name="Pinnacle Freight",
         close_year=2021,
         deal_size_usd=180_000_000,
@@ -189,7 +189,7 @@ PRIOR_DEALS: tuple[PriorDealSeed, ...] = (
         integration_duration_months=10,
     ),
     PriorDealSeed(
-        memo_id="prior_deal_bastion_2020",
+        memo_id="prior_deal_sample_cargo_2020",
         target_name="Bastion Cargo",
         close_year=2020,
         deal_size_usd=265_000_000,

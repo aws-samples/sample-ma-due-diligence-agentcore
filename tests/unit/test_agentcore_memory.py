@@ -96,7 +96,7 @@ class _FakeAgentCoreClient:
         self._create_response = create_response or {
             "memory": {
                 "id": "mem-abc123",
-                "arn": "arn:aws:bedrock-agentcore:us-east-1:111111111111:memory/mem-abc123",
+                "arn": "arn:aws:bedrock-agentcore:us-east-1:111122223333:memory/mem-abc123",
                 "status": "CREATING",
             },
         }
@@ -120,7 +120,7 @@ class _FakeAgentCoreClient:
             "memory": {
                 "id": kwargs["memoryId"],
                 "arn": (
-                    f"arn:aws:bedrock-agentcore:us-east-1:111111111111:"
+                    f"arn:aws:bedrock-agentcore:us-east-1:111122223333:"
                     f"memory/{kwargs['memoryId']}"
                 ),
                 "status": self._describe_status,
@@ -153,7 +153,7 @@ def _event(
     event: dict[str, Any] = {
         "RequestType": request_type,
         "ResponseURL": "https://cfn-cr-responses.example.com/presigned",
-        "StackId": "arn:aws:cloudformation:us-east-1:111111111111:stack/test/guid",
+        "StackId": "arn:aws:cloudformation:us-east-1:111122223333:stack/test/guid",
         "RequestId": "req-guid",
         "LogicalResourceId": "AgentMemory",
         "ResourceProperties": properties

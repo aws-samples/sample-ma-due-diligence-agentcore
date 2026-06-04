@@ -1,15 +1,15 @@
-"""DataStack - Aurora Serverless v2, DynamoDB, S3, and the Bedrock KB.
+"""DataStack - AWS Aurora Serverless v2, AWS DynamoDB, AWS S3, and the Bedrock Knowledge Base.
 
 This stack owns the persistent data plane for the sample:
 
-- An Aurora PostgreSQL Serverless v2 cluster hosting the ``mna`` schema
+- An AWS Aurora PostgreSQL Serverless v2 cluster hosting the ``mna`` schema
   (target companies) and the ``mna.kb_chunks`` table that backs the
   Bedrock Knowledge Base's ``pgvector`` vector store.
-- A DynamoDB ``mna-sessions`` table for turn-level session caching with
+- An AWS DynamoDB ``mna-sessions`` table for turn-level session caching with
   TTL-bounded storage cost.
-- An S3 bucket that stores the synthetic CIMs, financials, press packs,
+- An AWS S3 bucket that stores the synthetic CIMs, financials, press packs,
   memos, and governance documents.
-- A Bedrock Knowledge Base that embeds the S3 documents with
+- An Bedrock Knowledge Base that embeds the S3 documents with
   ``amazon.titan-embed-text-v2:0`` and persists the vectors into Aurora
   via the ``pgvector`` extension.
 - SSM parameters that publish each resource's identifier under the
@@ -118,7 +118,7 @@ _SESSIONS_TABLE_NAME = "mna-sessions"
 # ``src/mna/config.py::ALL_PARAMETERS`` for the three that the shared
 # Python package resolves directly.
 _SSM_AURORA_CLUSTER_ARN = "/mna/aurora/cluster_arn"
-_SSM_AURORA_SECRET_ARN = "/mna/aurora/secret_arn"
+_SSM_AURORA_SECRET_ARN = "/mna/aurora/secret_arn"  # noqa: S105 - SSM parameter path, not a credential
 _SSM_DOCS_BUCKET = "/mna/docs/bucket"
 _SSM_SESSIONS_TABLE = "/mna/sessions/table"
 _SSM_KB_ID = "/mna/kb/id"
@@ -284,7 +284,7 @@ class DataStack(Stack):
             # unquoted identifiers to lowercase).
             credentials=rds.Credentials.from_generated_secret(
                 username="mna_admin",
-                secret_name="mna/aurora/admin",
+                secret_name="mna/aurora/admin",  # noqa: S106 - secret name (not the secret value)
             ),
             default_database_name=_AURORA_DATABASE_NAME,
             # IAM database authentication (Req 14.7) lets the agent

@@ -1,4 +1,4 @@
-# Implementation Plan
+# M&A Due Diligence Multi-Agent Sample — Implementation Plan
 
 This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks that build on each other. Each task references the requirements it satisfies. Tasks are grouped by phase to minimize rework — earlier phases produce artifacts that later phases depend on. Execute top to bottom unless a task is explicitly marked independent.
 
@@ -43,16 +43,16 @@ This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks 
   - _Requirements: 14.6_
 
 - [x] 6. Implement `DataStack` (part 1 of 2): Aurora + DynamoDB + S3
-  - Aurora Serverless v2 cluster (PostgreSQL 15+, min 0.5 ACU, max 2 ACU) in private subnets
-  - Aurora credentials in Secrets Manager; IAM database authentication enabled
+  - AWS Aurora Serverless v2 cluster (PostgreSQL 15+, min 0.5 ACU, max 2 ACU) in private subnets
+  - Aurora credentials in AWS Secrets Manager; IAM database authentication enabled
   - Read-only IAM policy scoped to the `mna` schema (for the agent runtime role)
-  - DynamoDB `mna-sessions` table, on-demand billing, TTL on `expires_at`
-  - S3 documents bucket with block-public-access, SSE-S3, versioning
+  - AWS DynamoDB `mna-sessions` table, on-demand billing, TTL on `expires_at`
+  - AWS S3 documents bucket with block-public-access, SSE-S3, versioning
   - SSM parameters for downstream discovery
   - _Requirements: 2.5, 2.6, 13.3, 14.3, 14.4, 14.6, 14.7_
 
 - [x] 7. Implement `DataStack` (part 2 of 2): Bedrock Knowledge Base with pgvector
-  - Bedrock KB with data source pointing at the S3 bucket
+  - Bedrock Knowledge Base with data source pointing at the S3 bucket
   - Embeddings model: `amazon.titan-embed-text-v2:0`
   - Vector store: reuse the Aurora cluster with pgvector extension
   - KB service role with S3 read + Aurora write permissions
@@ -60,8 +60,8 @@ This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks 
   - _Requirements: 2.1, 2.2_
 
 - [x] 8. Implement `EvaluatorStack`
-  - Python 3.11 Lambda for citation check (512 MB, 30 s timeout)
-  - CloudWatch log group with 7-day retention
+  - Python 3.11 AWS Lambda function for citation check (512 MB, 30 s timeout)
+  - Amazon CloudWatch log group with 7-day retention
   - Lambda code imported from `lambda/citation_check/handler.py` (implemented in Phase 3)
   - Expose ARN via SSM `/mna/evaluator/arn`
   - _Requirements: 4.2, 4.3, 4.4_
@@ -81,9 +81,9 @@ This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks 
   - _Requirements: 11a.1, 11a.2, 11a.3, 11a.7, 11a.8, 11a.9_
 
 - [x] 11. Implement the container build pipeline
-  - ECR repository with lifecycle policy (keep 3 images)
-  - S3 source bucket for CodeBuild inputs
-  - CodeBuild project on managed ARM64 Linux (`aws/codebuild/amazonlinux2-aarch64-standard`)
+  - AWS ECR repository with lifecycle policy (keep 3 images)
+  - AWS S3 source bucket for CodeBuild inputs
+  - AWS CodeBuild project on managed ARM64 Linux (`aws/codebuild/amazonlinux2-aarch64-standard`)
   - Dockerfile at `infra/agent_image/Dockerfile` based on `python:3.11-slim`
   - **Build trigger CR** (Lambda handler at `lambda/build_trigger/handler.py`) starts CodeBuild on source hash change, using the shared CR base from task 10
   - **Build waiter CR** (Lambda handler at `lambda/build_waiter/handler.py`) polls every 30 s with a 14-minute cap, returns compact success/failure to CloudFormation

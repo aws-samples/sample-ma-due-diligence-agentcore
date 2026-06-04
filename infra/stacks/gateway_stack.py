@@ -1,7 +1,7 @@
-"""GatewayStack - AgentCore Gateway + market-data Lambda.
+"""GatewayStack - AgentCore Gateway + market-data AWS Lambda function.
 
 This stack owns the single external tool the sample exposes via
-Amazon Bedrock AgentCore Gateway, wired to a Lambda that returns
+AWS Bedrock AgentCore Gateway, wired to an AWS Lambda function that returns
 deterministic synthetic comparable-company multiples. The Financial
 Analysis agent (task 23) consumes the tool through the
 :mod:`mna.tools.market_data` wrapper (task 20) which in turn
@@ -216,7 +216,7 @@ class GatewayStack(Stack):
         # ``lambda:InvokeFunction`` on the market-data function ARN.
         # CloudWatch Logs permissions are not required here because
         # the Gateway itself writes invocation traces to its own
-        # service-managed log group — the Lambda's own log group is
+        # service-managed log group — the log group for the Lambda function is
         # written by the Lambda runtime under its execution role
         # (CDK's default role), not this Gateway role.
         self.gateway_service_role = iam.Role(
@@ -387,6 +387,11 @@ class GatewayStack(Stack):
         # ``bedrock-agentcore:*``. IAM evaluates the AgentCore control
         # plane under the ``bedrock-agentcore:`` prefix even though
         # the boto3 client is named ``bedrock-agentcore-control``.
+        # ``Resource="*"`` is used because several of these actions
+        # (Create/List) do not support resource-level permissions per
+        # the AWS IAM service authorization reference. Where a resource
+        # ARN does apply (Get/Update/Delete on a specific gateway), the
+        # account+region scope below limits exposure to this stack.
         gateway_function.add_to_role_policy(
             iam.PolicyStatement(
                 sid="AgentCoreGatewayControl",
@@ -403,7 +408,10 @@ class GatewayStack(Stack):
                     "bedrock-agentcore:GetGatewayTarget",
                     "bedrock-agentcore:ListGatewayTargets",
                 ],
-                resources=["*"],
+                resources=[
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:gateway/*",
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:gateway/*/target/*",
+                ],
             ),
         )
         # Workload-identity permissions. When AgentCore provisions a
@@ -413,7 +421,8 @@ class GatewayStack(Stack):
         # the gateway provisioning fails asynchronously with
         # "Failed to create gateway dependencies" and a terminal
         # FAILED status — surfaced by the ``_wait_for_gateway_ready``
-        # helper in the handler.
+        # helper in the handler. Scoped to account+region to limit
+        # blast radius.
         gateway_function.add_to_role_policy(
             iam.PolicyStatement(
                 sid="AgentCoreWorkloadIdentity",
@@ -425,7 +434,9 @@ class GatewayStack(Stack):
                     "bedrock-agentcore:DeleteWorkloadIdentity",
                     "bedrock-agentcore:ListWorkloadIdentities",
                 ],
-                resources=["*"],
+                resources=[
+                    f"arn:aws:bedrock-agentcore:{self.region}:{self.account}:workload-identity/*",
+                ],
             ),
         )
         # ``iam:PassRole`` is required so the CR Lambda can hand the
@@ -443,13 +454,13 @@ class GatewayStack(Stack):
                 },
             ),
         )
-        # ``sts:GetCallerIdentity`` backs the ARN-synthesis fallback
+        # ``sts:GetCallerIdentity`` is an account-level action with no
+        # resource-level condition keys per AWS IAM documentation; it
+        # must use ``resources=["*"]``. Backs the ARN-synthesis fallback
         # in the handler: when the AgentCore ``CreateGateway`` response
         # omits ``gatewayArn`` (observed in some early GA releases), the
         # handler constructs the ARN from partition/region/account + id
         # so CloudFormation's ``Fn::GetAtt GatewayArn`` always resolves.
-        # ``sts:GetCallerIdentity`` has no resource-level condition keys,
-        # so the resource must be ``"*"``.
         gateway_function.add_to_role_policy(
             iam.PolicyStatement(
                 sid="StsGetCallerIdentity",

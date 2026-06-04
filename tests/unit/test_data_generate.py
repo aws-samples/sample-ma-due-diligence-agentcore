@@ -103,7 +103,7 @@ class TestInsertCompanies:
         inserted = generate.insert_companies(
             rows,
             cluster_arn="arn:aws:rds:us-east-1:111122223333:cluster:mna",
-            secret_arn="arn:aws:secretsmanager:us-east-1:111122223333:secret:mna",
+            secret_arn="arn:aws:secretsmanager:us-east-1:111122223333:secret:mna",  # noqa: S106 - test fixture ARN, not a credential
             rds_data_client=client,
         )
 

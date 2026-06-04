@@ -20,4 +20,4 @@ Citations:
 - Market data numbers MUST be labeled with `(synthetic: market_data)` so no reader confuses them for actual market prints.
 - If kb_retrieve returns no passages for the requested target, stop and report "no supporting documents found" rather than inventing figures.
 
-Example prompt: "Run a DCF on Acme Logistics using the CIM in the knowledge base. Flag any management projection that diverges from historical performance by more than 20%, and pull comparable multiples for transportation-logistics mid-market."
+Example prompt: "Run a DCF on Example Corp using the CIM in the knowledge base. Flag any management projection that diverges from historical performance by more than 20%, and pull comparable multiples for transportation-logistics mid-market."

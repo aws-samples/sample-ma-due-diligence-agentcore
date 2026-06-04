@@ -1,15 +1,15 @@
 """NetworkStack - VPC and networking primitives for the sample.
 
-This stack owns the private networking fabric that hosts Aurora PostgreSQL
-Serverless v2, the Gateway-backed Lambdas, and any Custom Resource
-Lambdas that need to reach AWS APIs from inside the VPC.
+This stack owns the private networking fabric that hosts AWS Aurora PostgreSQL
+Serverless v2, the Gateway-backed AWS Lambda functions, and any Custom Resource
+Lambda functions that need to reach AWS APIs from inside the VPC.
 
 Design reference: ``.kiro/specs/ma-due-diligence-agentcore/design.md``
 section *Infrastructure as Code Design - NetworkStack*.
 
 Requirements implemented by this stack:
 
-- **14.6** Aurora PostgreSQL is deployed into private subnets with no
+- **14.6** AWS Aurora PostgreSQL is deployed into private subnets with no
   public internet path. The two ``PRIVATE_ISOLATED`` subnets created
   below are exactly what :class:`infra.stacks.data_stack.DataStack`
   attaches the Aurora cluster to. VPC interface endpoints for Secrets
