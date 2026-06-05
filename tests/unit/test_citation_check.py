@@ -74,7 +74,7 @@ def _supporting_citations_for_acme() -> list[Citation]:
     return [
         Citation(
             text=(
-                "Acme Logistics reported revenue of $250 million in fiscal 2023, "
+                "Example Corp reported revenue of $250 million in fiscal 2023, "
                 "driven by growth in regional freight brokerage operations."
             ),
             source="s3://mna-docs/cims/acme_logistics.pdf",
@@ -106,7 +106,7 @@ def _acme_pass_response() -> str:
     """A response whose claims are all supported by the fixture citations."""
 
     return (
-        "Acme Logistics reported revenue of $250 million in fiscal 2023. "
+        "Example Corp reported revenue of $250 million in fiscal 2023. "
         "The company operates a fleet of 340 trucks across twelve distribution centers. "
         "EBITDA margin expanded from 11 percent in 2021 to 14 percent in 2023."
     )
@@ -180,11 +180,11 @@ class TestIsClaimSentence:
 class TestExtractClaims:
     def test_skips_filler_keeps_factual_sentences(self) -> None:
         text = (
-            "Sure. Acme Logistics reported revenue of $250 million. "
+            "Sure. Example Corp reported revenue of $250 million. "
             "Thanks for asking."
         )
         claims = extract_claims(text)
-        assert claims == ["Acme Logistics reported revenue of $250 million."]
+        assert claims == ["Example Corp reported revenue of $250 million."]
 
     def test_returns_empty_for_empty_input(self) -> None:
         assert extract_claims("") == []
@@ -217,14 +217,14 @@ class TestCheckCitationsPass:
     def test_accepts_dict_shaped_citations(self) -> None:
         citations = [
             {
-                "text": "Acme Logistics revenue reached 250 million in 2023.",
+                "text": "Example Corp revenue reached 250 million in 2023.",
                 "source": "s3://mna-docs/cims/acme.pdf",
                 "page": 4,
                 "score": 0.9,
             }
         ]
         result = check_citations(
-            "Acme Logistics revenue reached 250 million in 2023.",
+            "Example Corp revenue reached 250 million in 2023.",
             citations,
         )
         assert result.passed is True
@@ -238,14 +238,14 @@ class TestCheckCitationsPass:
 class TestCheckCitationsFail:
     def test_numeric_claim_without_supporting_citation_fails(self) -> None:
         response = (
-            "Acme Logistics reported revenue of $250 million in fiscal 2023. "
+            "Example Corp reported revenue of $250 million in fiscal 2023. "
             "The company also operates 900 warehouses in twenty states."
         )
         # Only the revenue claim is supported; the warehouse claim has
         # no matching citation.
         citations = [
             Citation(
-                text="Acme Logistics reported revenue of $250 million in fiscal 2023.",
+                text="Example Corp reported revenue of $250 million in fiscal 2023.",
                 source="s3://mna-docs/cims/acme_logistics.pdf",
                 page=4,
             )
@@ -316,11 +316,11 @@ class TestLambdaHandler:
 
     def test_fail_case_matches_local_evaluator(self, lambda_handler_module) -> None:
         response = (
-            "Acme Logistics reported revenue of $250 million in fiscal 2023. "
+            "Example Corp reported revenue of $250 million in fiscal 2023. "
             "The company also operates 900 warehouses in twenty states."
         )
         citation = Citation(
-            text="Acme Logistics reported revenue of $250 million in fiscal 2023.",
+            text="Example Corp reported revenue of $250 million in fiscal 2023.",
             source="s3://mna-docs/cims/acme_logistics.pdf",
             page=4,
         )
@@ -348,14 +348,14 @@ class TestLambdaHandler:
         # A mix of valid and invalid entries should still produce a
         # coherent result using only the valid citations.
         event = {
-            "response_text": "Acme Logistics reported revenue of $250 million.",
+            "response_text": "Example Corp reported revenue of $250 million.",
             "citations": [
                 None,
                 "not a dict",
                 {"source": "s3://missing-text.pdf"},  # no text key
                 {
                     "text": (
-                        "Acme Logistics reported revenue of $250 million in 2023."
+                        "Example Corp reported revenue of $250 million in 2023."
                     ),
                     "source": "s3://mna-docs/cims/acme.pdf",
                 },

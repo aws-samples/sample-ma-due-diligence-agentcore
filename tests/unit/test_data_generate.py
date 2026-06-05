@@ -160,7 +160,7 @@ class TestDocuments:
         company = next(
             r
             for r in generate.generate_companies()
-            if r.legal_name == "Acme Logistics"
+            if r.legal_name == "Example Corp"
         )
         keys = [a.s3_key for a in generate.build_company_documents(company)]
         # At minimum the three markdown artifacts must exist; PDFs are

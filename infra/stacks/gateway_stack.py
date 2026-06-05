@@ -1,7 +1,7 @@
 """GatewayStack - AgentCore Gateway + market-data AWS Lambda function.
 
 This stack owns the single external tool the sample exposes via
-AWS Bedrock AgentCore Gateway, wired to an AWS Lambda function that returns
+Amazon Amazon Bedrock AgentCore Gateway, wired to an AWS Lambda function that returns
 deterministic synthetic comparable-company multiples. The Financial
 Analysis agent (task 23) consumes the tool through the
 :mod:`mna.tools.market_data` wrapper (task 20) which in turn
@@ -224,7 +224,7 @@ class GatewayStack(Stack):
             "GatewayServiceRole",
             assumed_by=iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
             description=(
-                "Role assumed by Bedrock AgentCore Gateway to invoke "
+                "Role assumed by Amazon Bedrock AgentCore Gateway to invoke "
                 "the M&A Due Diligence sample's market-data Lambda "
                 "target. Least-privilege by design."
             ),
@@ -454,8 +454,8 @@ class GatewayStack(Stack):
                 },
             ),
         )
-        # ``sts:GetCallerIdentity`` is an account-level action with no
-        # resource-level condition keys per AWS IAM documentation; it
+        # Security exception: ``sts:GetCallerIdentity`` is an account-level
+        # action with no resource-level condition keys per AWS IAM documentation; it
         # must use ``resources=["*"]``. Backs the ARN-synthesis fallback
         # in the handler: when the AgentCore ``CreateGateway`` response
         # omits ``gatewayArn`` (observed in some early GA releases), the

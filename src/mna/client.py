@@ -60,7 +60,7 @@ def list_agents() -> list[str]:
 
 
 def _build_agentcore_client(region_name: str | None = None) -> BaseClient:
-    """Construct a boto3 client for the AgentCore data plane (lazy import)."""
+    """Construct a boto3 client for the Amazon Bedrock AgentCore data plane (lazy import)."""
 
     import boto3  # Lazy import keeps the package cold-start safe.
 
@@ -421,7 +421,7 @@ def invoke_agent(
     runtime_arn: str | None = None,
     dynamodb_client: BaseClient | None = None,
 ) -> AgentResponse:
-    """Invoke an agent hosted on AgentCore Runtime.
+    """Invoke an agent hosted on Amazon Bedrock AgentCore Runtime.
 
     Parameters mirror the design doc: ``agent_name`` selects the
     specialist via the runtime ``qualifier`` (or ``"supervisor"`` when

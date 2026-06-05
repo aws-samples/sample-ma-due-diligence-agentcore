@@ -25,7 +25,7 @@ Pinned to Claude Sonnet 4.5 by default
 Guardrail
 ---------
 When ``MNA_GUARDRAIL_ID`` is set, the supervisor attaches the
-specified Bedrock Guardrail to its model. The Guardrail is configured
+specified Amazon Bedrock Guardrail to its model. The Guardrail is configured
 with harmful-content filters and a financial-advice denial topic per
 design §Safety Design.
 
@@ -38,7 +38,7 @@ invocation contract. Container entrypoint:
 
 Example prompt
 --------------
-"For Acme Logistics, run a DCF using the CIM, flag any stretch
+"For Example Corp, run a DCF using the CIM, flag any stretch
 assumptions, compare the integration risk against our three most
 recent deals, and confirm the whole answer is backed by citations."
 

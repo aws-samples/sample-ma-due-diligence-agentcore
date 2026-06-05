@@ -4,8 +4,8 @@ Brings the Aurora Serverless v2 cluster up to the state the rest of
 the sample expects before any downstream resource touches it:
 
 1. Install the ``pgvector`` extension in the ``mna`` database so the
-   Bedrock Knowledge Base can persist embeddings produced by the
-   Titan model (design §Data Model - Bedrock Knowledge Base).
+   Amazon Bedrock Knowledge Base can persist embeddings produced by the
+   Titan model (design §Data Model - Amazon Bedrock Knowledge Base).
 2. Apply the structured target-company schema shipped in
    ``data/schemas/target_companies.sql`` (design §Data Model - Aurora
    PostgreSQL Schema).
@@ -387,9 +387,9 @@ def _execute_statements(
     database: str,
     statements: list[str],
 ) -> int:
-    """Execute each DDL statement via the RDS Data API.
+    """Run each DDL statement via the RDS Data API.
 
-    Returns the number of statements that executed successfully.
+    Returns the number of statements that ran successfully.
     Statements run one at a time (no transaction) because PostgreSQL
     forbids ``CREATE INDEX CONCURRENTLY`` and several DDL variants
     inside a transaction — and the surrounding CR wrapper already

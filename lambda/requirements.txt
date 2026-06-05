@@ -1,7 +1,7 @@
 # Lambda-side pinned dependencies.
 #
 # The Lambda managed Python runtime bundles an older boto3 than the
-# evolving AWS services (notably Bedrock AgentCore) currently require.
+# evolving AWS services (notably Amazon Bedrock AgentCore) currently require.
 # Relying on that bundled SDK produced a client-side
 # ``ParamValidationError`` when calling ``CreateGateway`` because the
 # runtime's service model marked ``authorizerConfiguration`` as

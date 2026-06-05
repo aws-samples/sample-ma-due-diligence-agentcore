@@ -1,12 +1,12 @@
-"""``BuildPipelineConstruct`` — Amazon Elastic Container Registry (AWS ECR), AWS CodeBuild, and the build CRs.
+"""``BuildPipelineConstruct`` — Amazon Elastic Container Registry (Amazon ECR), AWS CodeBuild, and the build CRs.
 
 This construct owns every AWS resource required to turn the agent
 source tree into an ARM64 Linux container image that AgentCore
 Runtime (task 13) can consume:
 
-1. **AWS ECR repository** — stores the built image and keeps a sliding
+1. **Amazon ECR repository** — stores the built image and keeps a sliding
    window of the last three tagged revisions (lifecycle policy).
-2. **AWS S3 source bucket** — CDK uploads ``src/mna/`` +
+2. **Amazon S3 source bucket** — CDK uploads ``src/mna/`` +
    ``requirements.txt`` + ``infra/agent_image/Dockerfile`` as a
    versioned zipped asset each synth. CodeBuild pulls the source
    from this bucket.
@@ -242,7 +242,7 @@ class BuildPipelineConstruct(Construct):
                 "phases": {
                     "pre_build": {
                         "commands": [
-                            "echo Logging in to AWS ECR...",
+                            "echo Logging in to Amazon ECR...",
                             (
                                 "aws ecr get-login-password --region $AWS_REGION "
                                 "| docker login --username AWS --password-stdin "
@@ -423,7 +423,7 @@ class BuildPipelineConstruct(Construct):
                 "ImageTag": self.image_tag,
                 # Passing the asset hash as the SourceVersion means
                 # CloudFormation diffs on it for stack updates — no
-                # change, no CR run, no CodeBuild execution.
+                # change, no CR run, no CodeBuild build.
                 "SourceVersion": self.image_tag,
             },
         )

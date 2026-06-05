@@ -1,6 +1,6 @@
 """AgentCore Gateway Custom Resource handler.
 
-Manages the lifecycle of a AWS Bedrock AgentCore Gateway **and** its
+Manages the lifecycle of a Amazon Amazon Bedrock AgentCore Gateway **and** its
 single MCP-protocol Lambda target via the
 ``bedrock-agentcore-control`` service (``CreateGateway`` /
 ``UpdateGateway`` / ``DeleteGateway`` and ``CreateGatewayTarget`` /

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Verify Bedrock model access is enabled for the required providers.
+    Verify Amazon Bedrock model access is enabled for the required providers.
 
 .DESCRIPTION
     Windows-native sibling of scripts/check_bedrock_access.sh. Feature
@@ -9,7 +9,7 @@
 
     What "failure" means
       The script exits with code 1 before any AWS resources are touched.
-      The reader opens the Bedrock model-access console, requests access
+      The reader opens the Amazon Bedrock model-access console, requests access
       for the Anthropic Claude and Amazon Nova families, and re-runs.
 
     Method
@@ -62,7 +62,7 @@ foreach ($provider in @("anthropic", "amazon")) {
     }
 
     if ([string]::IsNullOrWhiteSpace($models) -or $models -eq "None") {
-        Write-Warning "No Bedrock models returned for provider '$provider' in $Region."
+        Write-Warning "No Amazon Bedrock models returned for provider '$provider' in $Region."
         Write-Warning "Enable access for the $provider model family here:"
         Write-Warning "  $BedrockAccessConsole"
         $fail = $true
@@ -74,11 +74,11 @@ foreach ($provider in @("anthropic", "amazon")) {
 
 if ($fail) {
     Write-Error @"
-Bedrock model access is not fully enabled.
+Amazon Bedrock model access is not fully enabled.
 Request access for Anthropic Claude and Amazon Nova families:
   $BedrockAccessConsole
 "@
     exit 1
 }
 
-Write-Host "OK: Bedrock model access enabled for required providers."
+Write-Host "OK: Amazon Bedrock model access enabled for required providers."

@@ -221,7 +221,7 @@ class TestCreateMemoryRecord:
 
         result = create_memory_record(
             session_namespace("sess-1"),
-            "User asked about Acme Logistics",
+            "User asked about Example Corp",
             metadata={"turn": 1},
             memory_id=_MEMORY_ID,
             client=client,
@@ -230,7 +230,7 @@ class TestCreateMemoryRecord:
         call = client.create_memory_record.call_args
         assert call.kwargs["memoryId"] == _MEMORY_ID
         assert call.kwargs["namespace"] == "session_sess-1"
-        assert call.kwargs["content"] == {"text": "User asked about Acme Logistics"}
+        assert call.kwargs["content"] == {"text": "User asked about Example Corp"}
         assert call.kwargs["metadata"] == {"turn": 1}
 
         assert result == {"id": "rec-42", "namespace": "session_sess-1"}

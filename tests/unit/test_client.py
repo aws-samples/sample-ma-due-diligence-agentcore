@@ -86,7 +86,7 @@ class TestInvokeAgent:
 
         response = invoke_agent(
             "supervisor",
-            "Run a DCF on Acme Logistics",
+            "Run a DCF on Example Corp",
             session_id="sess-123",
             agentcore_client=client,
             runtime_arn=_RUNTIME_ARN,
@@ -102,7 +102,7 @@ class TestInvokeAgent:
         assert kwargs["runtimeSessionId"] == "sess-123"
         payload = json.loads(kwargs["payload"].decode("utf-8"))
         assert payload == {
-            "prompt": "Run a DCF on Acme Logistics",
+            "prompt": "Run a DCF on Example Corp",
             "session_id": "sess-123",
             "agent_name": "supervisor",
         }

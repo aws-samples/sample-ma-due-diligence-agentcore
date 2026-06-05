@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Verify the target AWS region supports AWS Bedrock AgentCore.
+    Verify the target AWS region supports Amazon Amazon Bedrock AgentCore.
 
 .DESCRIPTION
     Windows-native sibling of scripts/check_region.sh. Feature parity is a
@@ -56,12 +56,12 @@ Docs: $AgentCoreRegionsDoc
 }
 
 if ($SupportedRegions -contains $Region) {
-    Write-Host "OK: Region '$Region' is a supported Bedrock AgentCore region."
+    Write-Host "OK: Region '$Region' is a supported Amazon Bedrock AgentCore region."
     exit 0
 }
 
 Write-Error @"
-Region '$Region' is not a supported Bedrock AgentCore region.
+Region '$Region' is not a supported Amazon Bedrock AgentCore region.
 Supported regions: $($SupportedRegions -join ', ')
 Set AWS_REGION to one of the supported values and re-run.
 For the authoritative list of AgentCore regions, see:

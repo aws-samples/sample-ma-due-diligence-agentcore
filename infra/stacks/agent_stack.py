@@ -1,10 +1,10 @@
 """AgentStack - AgentCore Runtime, Memory, Guardrail, and build pipeline.
 
 Task 11 populated this stack with the container build pipeline (Amazon
-ECR repository, AWS S3 source asset, AWS CodeBuild project, and the
+ECR repository, Amazon S3 source asset, AWS CodeBuild project, and the
 build + waiter Custom Resources). Task 13 layers on:
 
-* an Bedrock Guardrail (harmful-content filters + financial-advice
+* an Amazon Bedrock Guardrail (harmful-content filters + financial-advice
   denial topic) via the native ``aws_bedrock.CfnGuardrail`` L1;
 * an AgentCore Memory resource (native L1 if ``cdk-lib`` ships one,
   else a Custom Resource backed by ``lambda/agentcore_memory``);
@@ -23,12 +23,12 @@ Build Pipeline*, *Custom Resources Inventory*, and *Security Design
 
 Requirements implemented by this stack:
 
-* **1.4** The agent runtime is hosted on AWS Bedrock AgentCore
+* **1.4** The agent runtime is hosted on Amazon Amazon Bedrock AgentCore
   Runtime (native or CR-managed).
 * **2.3** / **2.4** AgentCore Memory is provisioned and its
   ``prior_deals`` namespace is seeded so the Strategic Fit agent has
   access to prior-deal memos.
-* **4.1** A Bedrock Guardrail is attached to the runtime (via the
+* **4.1** A Amazon Bedrock Guardrail is attached to the runtime (via the
   ``MNA_GUARDRAIL_ID`` environment variable) and configured with
   harmful-content filters and a ``financial_advice`` denial topic.
 * **11a.1–11a.9** Every Custom Resource this stack creates follows
@@ -234,10 +234,10 @@ class AgentStack(Stack):
         self.image_uri = self.build_pipeline.image_uri
 
         # ------------------------------------------------------------------
-        # Bedrock Guardrail (Req 4.1)
+        # Amazon Bedrock Guardrail (Req 4.1)
         # ------------------------------------------------------------------
         # Harmful-content filters applied at HIGH strength across every
-        # Bedrock filter category the service exposes today. A single
+        # Amazon Bedrock filter category the service exposes today. A single
         # denial topic refuses to produce personalized financial advice,
         # enforcing the "no prescriptive guidance" posture the design
         # commits to in §Components - Supervisor Agent.
@@ -341,13 +341,13 @@ class AgentStack(Stack):
             "AgentRuntimeRole",
             assumed_by=iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
             description=(
-                "Role assumed by the Bedrock AgentCore Runtime hosting "
+                "Role assumed by the Amazon Bedrock AgentCore Runtime hosting "
                 "the supervisor and specialist agents. Least-privilege "
                 "by design -- every statement is documented inline."
             ),
         )
 
-        # 1. Bedrock model invocation (Req 1.4, 12.2).
+        # 1. Amazon Bedrock model invocation (Req 1.4, 12.2).
         #
         #    ``bedrock:InvokeModel`` and ``InvokeModelWithResponseStream``
         #    scoped to the foundation model ARNs *and* the US
@@ -387,7 +387,7 @@ class AgentStack(Stack):
             ),
         )
 
-        # 2. Bedrock Guardrail (Req 4.1).
+        # 2. Amazon Bedrock Guardrail (Req 4.1).
         #
         #    ``ApplyGuardrail`` is the action AgentCore uses to run the
         #    configured guardrail against every turn. Scope tied to the
@@ -575,8 +575,8 @@ class AgentStack(Stack):
         #    startup. The role needs pull-layer permissions scoped to
         #    the repository created by the build pipeline.
         #
-        # ``ecr:GetAuthorizationToken`` is an account-level action and
-        # requires ``Resource="*"`` per AWS IAM documentation — it has
+        # Security exception: ``ecr:GetAuthorizationToken`` is an account-level
+        # action and requires ``Resource="*"`` per AWS IAM documentation — it has
         # no resource-level permissions. The repository-scoped pull
         # actions below carry the actual access boundary.
         self.agent_runtime_role.add_to_policy(
@@ -747,7 +747,7 @@ class AgentStack(Stack):
             self,
             "AgentGuardrailIdOutput",
             value=self.guardrail_id,
-            description="ID of the Bedrock Guardrail applied to the supervisor",
+            description="ID of the Amazon Bedrock Guardrail applied to the supervisor",
         )
         CfnOutput(
             self,

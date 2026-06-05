@@ -8,7 +8,7 @@
 #   parity enforced by Requirement NFR-RT-7 / 11.7).
 #
 # What this script does (in order)
-#   1. Preflight: region check + Bedrock model-access check. Both exit
+#   1. Preflight: region check + Amazon Bedrock model-access check. Both exit
 #      non-zero with actionable error messages, so deployment fails fast
 #      before any billable resource is created (Requirement 10.2).
 #   2. Set up a local Python virtual environment under `.venv/` and

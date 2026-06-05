@@ -11,7 +11,7 @@ projections that diverge materially from historical performance.
 Tools
 -----
 - ``kb_retrieve``: Fetches CIM passages, financial statement
-  summaries, and press coverage from the Bedrock Knowledge Base. This
+  summaries, and press coverage from the Amazon Bedrock Knowledge Base. This
   is the primary source for historical financials and management
   projections. See :mod:`mna.tools.kb_retrieve`.
 - ``market_data``: Calls the AgentCore Gateway-hosted market-data

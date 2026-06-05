@@ -11,7 +11,7 @@ a remediation list when gaps are found.
 Tools
 -----
 - ``kb_retrieve``: Fetches the M&A governance checklist and supporting
-  policy passages from the Bedrock Knowledge Base (typically under
+  policy passages from the Amazon Bedrock Knowledge Base (typically under
   ``governance/``). See :mod:`mna.tools.kb_retrieve`.
 - ``citation_check`` (``check_citations_via_lambda``): Invokes the
   citation-check evaluator Lambda with the response under review and
@@ -27,7 +27,7 @@ Outputs
 
 Example prompt
 --------------
-"Review the Acme Logistics analysis in this session for completeness
+"Review the Example Corp analysis in this session for completeness
 against our M&A governance checklist. List any claims without source
 citations."
 

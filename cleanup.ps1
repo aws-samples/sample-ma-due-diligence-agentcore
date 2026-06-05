@@ -83,7 +83,7 @@ if (-not $Force) {
 ================================================================================
 
 This will permanently destroy all CDK stacks created by this sample:
-  - MnaAgentStack       (AgentCore Runtime, Memory, Guardrail, AWS ECR, AWS CodeBuild)
+  - MnaAgentStack       (AgentCore Runtime, Memory, Guardrail, Amazon ECR, AWS CodeBuild)
   - MnaGatewayStack     (AgentCore Gateway + market-data Lambda)
   - MnaEvaluatorStack   (citation-check Lambda)
   - MnaDataStack        (Aurora Serverless v2, DynamoDB, S3, Bedrock KB)
@@ -172,7 +172,7 @@ Run the following to double-check that no billable resources remain
     --query "repositories[?contains(repositoryName, 'mna')].repositoryName" ``
     --output text
 
-  # Bedrock Knowledge Bases:
+  # Amazon Amazon Bedrock Knowledge Bases:
   aws bedrock-agent list-knowledge-bases --region $Region ``
     --query "knowledgeBaseSummaries[?contains(name, 'mna')].{id:knowledgeBaseId,name:name}" ``
     --output table

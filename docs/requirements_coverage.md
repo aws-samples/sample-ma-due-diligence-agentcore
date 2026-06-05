@@ -28,7 +28,7 @@ signs off the in-scope requirements for the `v1.0.0` release.
 | 1.1 Exactly one supervisor agent routes prompts | 26 | `src/mna/agents/supervisor.py`, `tests/unit/test_agents.py` |
 | 1.2 Four specialist agents (Target, Financial, Strategic, Compliance) | 22-25 | `src/mna/agents/target_screening.py`, `financial_analysis.py`, `strategic_fit.py`, `compliance_validation.py` |
 | 1.3 Agents use the Strands SDK | 22-26 | `src/mna/agents/_base.py` (Strands import path), all specialists use `Agent` |
-| 1.4 Hosted on Bedrock AgentCore Runtime | 13, 26 | `infra/stacks/agent_stack.py`, `lambda/agentcore_runtime/handler.py`, `src/mna/agents/supervisor.py` (`@BedrockAgentCoreApp`) |
+| 1.4 Hosted on Amazon Bedrock AgentCore Runtime | 13, 26 | `infra/stacks/agent_stack.py`, `lambda/agentcore_runtime/handler.py`, `src/mna/agents/supervisor.py` (`@BedrockAgentCoreApp`) |
 | 1.5 Supervisor invokes specialists using agents-as-tools | 26 | `src/mna/agents/supervisor.py` (`use_agent` pattern), `tests/unit/test_agents.py` |
 | 1.6 Grounded responses include inline citations | 22-25, 38 | All specialists’ system prompts under `src/mna/agents/prompts/`, `tests/smoke_test.py::test_at_least_three_responses_include_citations` |
 
@@ -48,8 +48,8 @@ signs off the in-scope requirements for the `v1.0.0` release.
 | AC | Task(s) | Primary files |
 |---|---|---|
 | 2a.1 NL query translated to SQL | 19 | `src/mna/tools/text_to_sql.py` (`_generate_sql`) |
-| 2a.2 Execute generated SQL against Aurora | 19 | `src/mna/tools/text_to_sql.py` (RDS Data API call) |
-| 2a.3 Executed SQL visible in agent trace | 19 | `src/mna/tools/text_to_sql.py` returns SQL in the response payload, `tests/unit/test_text_to_sql.py` |
+| 2a.2 Run generated SQL against Aurora | 19 | `src/mna/tools/text_to_sql.py` (RDS Data API call) |
+| 2a.3 SQL that ran visible in agent trace | 19 | `src/mna/tools/text_to_sql.py` returns SQL in the response payload, `tests/unit/test_text_to_sql.py` |
 | 2a.4 Parameterized/SELECT-only safeguard | 19 | `src/mna/tools/text_to_sql.py` (`_validate_select_only` via `sqlparse`), `tests/unit/test_text_to_sql.py` rejects INSERT/UPDATE/DELETE/DDL |
 | 2a.5 IAM-authenticated read-only role | 12, 13 | `lambda/aurora_bootstrap/handler.py` (creates `mna_readonly` role + `rds_iam`), `infra/stacks/agent_stack.py` IAM policy scoped to the schema |
 
@@ -65,7 +65,7 @@ signs off the in-scope requirements for the `v1.0.0` release.
 
 | AC | Task(s) | Primary files |
 |---|---|---|
-| 4.1 Supervisor uses a Bedrock Guardrail | 13, 26 | `infra/stacks/agent_stack.py` (Guardrail native resource), `src/mna/agents/supervisor.py` (`MNA_GUARDRAIL_ID`) |
+| 4.1 Supervisor uses a Amazon Bedrock Guardrail | 13, 26 | `infra/stacks/agent_stack.py` (Guardrail native resource), `src/mna/agents/supervisor.py` (`MNA_GUARDRAIL_ID`) |
 | 4.2 Custom evaluator validates every factual claim has a citation | 8, 14, 25 | `lambda/citation_check/handler.py`, `src/mna/evaluators/citation_check.py` (local mirror), `src/mna/agents/compliance_validation.py` |
 | 4.3 Evaluator produces pass/fail with per-claim detail from notebook/CLI | 14, 33, 34 | `src/mna/types.py` (`EvaluationResult`), `cli/invoke.py evaluate`, `notebooks/walkthrough.ipynb` Cell 6 |
 | 4.4 Result stored alongside the agent response | 8, 33 | `infra/stacks/data_stack.py` (DynamoDB `evaluation` attribute), `src/mna/client.py` + `cli/invoke.py` persist evaluation payloads |
@@ -257,3 +257,7 @@ section and the `README.md` "What's implemented vs. extension" table:
 - AgentCore Evaluations service, LLM-as-judge, continuous monitoring.
 
 These are intentionally deferred and do not block the v1.0.0 release.
+
+## Conclusion
+
+All numbered requirements from `requirements.md` are covered by the implementation. No gaps were identified during this audit. The sample is ready for release pending the final blog-post link insertion.

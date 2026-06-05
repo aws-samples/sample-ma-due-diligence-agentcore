@@ -6,7 +6,7 @@
 
 First public release of the **M&A Due Diligence Multi-Agent** AWS
 sample. This release accompanies the AWS Machine Learning blog post
-_"Build a multi-agent M&A due-diligence assistant on AWS Bedrock
+_"Build a multi-agent M&A due-diligence assistant on Amazon Bedrock
 AgentCore"_ (link will be added once the post is published).
 
 ### What ships in v1.0.0
@@ -23,11 +23,11 @@ AgentCore"_ (link will be added once the post is published).
 
 **Grounding and memory**
 
-- Bedrock Knowledge Base over a synthetic S3-backed document
+- Amazon Bedrock Knowledge Base over a synthetic S3-backed document
   corpus (CIMs, financial summaries, press packs, governance
   checklist), indexed into Aurora pgvector.
 - Text-to-SQL tool that translates natural language into read-only
-  PostgreSQL queries against an AWS Aurora Serverless v2 target-company
+  PostgreSQL queries against an Amazon Aurora Serverless v2 target-company
   schema (20+ fictional transportation and logistics companies).
 - AgentCore Memory with `session_<id>` (short-term) and `prior_deals`
   (long-term) namespaces, seeded with three prior-deal memos.
@@ -38,7 +38,7 @@ AgentCore"_ (link will be added once the post is published).
   routed via an AgentCore Gateway MCP target to an AWS Lambda function.
 - One custom evaluator Lambda enforcing citation validation on every
   factual claim.
-- Bedrock Guardrail on the supervisor for harmful-content filtering
+- Amazon Bedrock Guardrail on the supervisor for harmful-content filtering
   and a financial-advice denial topic.
 
 **Infrastructure-as-Code (AWS CDK v2, Python)**
@@ -73,7 +73,7 @@ AgentCore"_ (link will be added once the post is published).
   (`./cleanup.sh` or `.\cleanup.ps1`).
 - Post-deploy smoke test (`tests/smoke_test.py`) that exercises every
   specialist and the Gateway path.
-- Preflight checks for AgentCore region GA and Bedrock model access.
+- Preflight checks for AgentCore region GA and Amazon Bedrock model access.
 
 **Documentation**
 
@@ -130,7 +130,7 @@ walks through the architecture, the agent orchestration pattern,
 and the reader journey:
 
 - **Blog post:** _"Build a multi-agent M&A due-diligence assistant
-  on AWS Bedrock AgentCore"_ — link will be added here once the
+  on Amazon Amazon Bedrock AgentCore"_ — link will be added here once the
   post is published.
 
 The README's "Documentation and references" section is the
@@ -177,3 +177,7 @@ description. Attach the companion blog post link once it is
 published.
 
 ---
+
+## Conclusion
+
+This initial release provides a complete, deployable reference for the supervisor-plus-specialists pattern on Amazon Bedrock AgentCore. We welcome feedback via GitHub issues and contributions following `CONTRIBUTING.md`. Thank you for trying the sample.

@@ -4,10 +4,10 @@ Three subcommands plus a ``--seed-all`` orchestrator wire together the
 three data stores the sample exercises:
 
 * ``companies``  — 25 fictional transportation/logistics targets inserted
-  into AWS Aurora PostgreSQL via the RDS Data API.
+  into Amazon Aurora PostgreSQL via the RDS Data API.
 * ``documents``  — CIM, financial statements, and press-release packs for
   the three spotlight companies, uploaded to S3 and indexed into the
-  Bedrock Knowledge Base.
+  Amazon Bedrock Knowledge Base.
 * ``memory``     — 3 prior-deal memos written to AgentCore Memory under
   the ``prior_deals`` namespace for the Strategic Fit specialist to read.
 
@@ -71,12 +71,12 @@ DEFAULT_SEED = 42
 #: Ordered alphabetically and sized at 25 so ``companies`` produces
 #: more than the Requirement 5.2 minimum of 20 rows.
 COMPANY_NAMES: tuple[str, ...] = (
-    "Acme Logistics",
+    "Example Corp",
     "Anchor Freightlines",
     "Bluewave Freight",
     "Cascade Transport",
     "Continental Drayage",
-    "Delta Haulage",
+    "Example Haulage",
     "Everglade Express",
     "Frontier Pacific Carriers",
     "Granite State Logistics",
@@ -129,7 +129,7 @@ SERVICE_LINES: tuple[str, ...] = (
 #: Slugs are derived from the canonical company id (below) so the S3
 #: paths match the design.
 SPOTLIGHT_COMPANY_NAMES: tuple[str, ...] = (
-    "Acme Logistics",
+    "Example Corp",
     "Bluewave Freight",
     "Cascade Transport",
 )
@@ -145,7 +145,7 @@ class PriorDealSeed:
     """Structured input for a prior-deal memo.
 
     Keeps the human-written thesis separate from the ~500-word
-    narrative body so we can template the body via Bedrock when it is
+    narrative body so we can template the body via Amazon Bedrock when it is
     available and fall back to a static template otherwise.
     """
 
@@ -163,7 +163,7 @@ class PriorDealSeed:
 #: can benchmark both successes and failures.
 PRIOR_DEALS: tuple[PriorDealSeed, ...] = (
     PriorDealSeed(
-        memo_id="prior_deal_anycompany_express_2022",
+        memo_id="prior_deal_example_express_2022",
         target_name="Northwind Express",
         close_year=2022,
         deal_size_usd=420_000_000,
@@ -189,7 +189,7 @@ PRIOR_DEALS: tuple[PriorDealSeed, ...] = (
         integration_duration_months=10,
     ),
     PriorDealSeed(
-        memo_id="prior_deal_sample_cargo_2020",
+        memo_id="prior_deal_example_cargo_2020",
         target_name="Bastion Cargo",
         close_year=2020,
         deal_size_usd=265_000_000,
@@ -214,7 +214,7 @@ SYNTHETIC_BANNER = "SYNTHETIC DATA - NOT REAL"
 
 
 def _slug(name: str) -> str:
-    """Convert a display name like ``"Acme Logistics"`` to ``"acme_logistics"``."""
+    """Convert a display name like ``"Example Corp"`` to ``"acme_logistics"``."""
 
     cleaned = [c.lower() if c.isalnum() else "_" for c in name]
     text = "".join(cleaned)
@@ -409,8 +409,8 @@ def _build_rds_data_client(region_name: str | None = None) -> BaseClient:
 # ---------------------------------------------------------------------------
 
 
-#: Bedrock model used to fill in document narrative when available.
-#: Haiku is cheap and fast; if Bedrock is unreachable the static
+#: Amazon Bedrock model used to fill in document narrative when available.
+#: Haiku is cheap and fast; if Amazon Bedrock is unreachable the static
 #: template still produces a valid document.
 DOCUMENT_MODEL_ID = "anthropic.claude-3-5-haiku-20241022-v1:0"
 
@@ -497,7 +497,7 @@ def _bedrock_fill(prompt: str, *, region_name: str | None = None) -> str | None:
 
 
 def _cim_markdown(company: CompanyRow, *, region_name: str | None = None) -> str:
-    """Render a CIM as markdown, optionally with Bedrock-expanded narrative."""
+    """Render a CIM as markdown, optionally with Amazon Bedrock-expanded narrative."""
 
     bedrock_prompt = (
         "Write a 6-paragraph Confidential Information Memorandum section covering "
@@ -871,7 +871,7 @@ def trigger_and_poll_ingestion(
 def _memo_body(deal: PriorDealSeed, *, region_name: str | None = None) -> str:
     """Render a ~500-word prior-deal memo body.
 
-    Bedrock is used to expand the narrative when available; the static
+    Amazon Bedrock is used to expand the narrative when available; the static
     template is detailed enough to stand alone when it is not.
     """
 

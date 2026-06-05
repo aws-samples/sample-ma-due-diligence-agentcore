@@ -1,6 +1,6 @@
 """AgentCore Memory Custom Resource handler.
 
-Manages the lifecycle of a AWS Bedrock AgentCore Memory resource via the
+Manages the lifecycle of a Amazon Amazon Bedrock AgentCore Memory resource via the
 ``bedrock-agentcore-control`` service (``CreateMemory`` / ``UpdateMemory``
 / ``DeleteMemory``) and seeds the two namespaces the sample depends on:
 

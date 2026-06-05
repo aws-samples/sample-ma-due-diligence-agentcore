@@ -43,16 +43,16 @@ This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks 
   - _Requirements: 14.6_
 
 - [x] 6. Implement `DataStack` (part 1 of 2): Aurora + DynamoDB + S3
-  - AWS Aurora Serverless v2 cluster (PostgreSQL 15+, min 0.5 ACU, max 2 ACU) in private subnets
+  - Amazon Aurora Serverless v2 cluster (PostgreSQL 15+, min 0.5 ACU, max 2 ACU) in private subnets
   - Aurora credentials in AWS Secrets Manager; IAM database authentication enabled
   - Read-only IAM policy scoped to the `mna` schema (for the agent runtime role)
-  - AWS DynamoDB `mna-sessions` table, on-demand billing, TTL on `expires_at`
-  - AWS S3 documents bucket with block-public-access, SSE-S3, versioning
+  - Amazon DynamoDB `mna-sessions` table, on-demand billing, TTL on `expires_at`
+  - Amazon S3 documents bucket with block-public-access, SSE-S3, versioning
   - SSM parameters for downstream discovery
   - _Requirements: 2.5, 2.6, 13.3, 14.3, 14.4, 14.6, 14.7_
 
-- [x] 7. Implement `DataStack` (part 2 of 2): Bedrock Knowledge Base with pgvector
-  - Bedrock Knowledge Base with data source pointing at the S3 bucket
+- [x] 7. Implement `DataStack` (part 2 of 2): Amazon Bedrock Knowledge Base with pgvector
+  - Amazon Bedrock Knowledge Base with data source pointing at the S3 bucket
   - Embeddings model: `amazon.titan-embed-text-v2:0`
   - Vector store: reuse the Aurora cluster with pgvector extension
   - KB service role with S3 read + Aurora write permissions
@@ -81,8 +81,8 @@ This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks 
   - _Requirements: 11a.1, 11a.2, 11a.3, 11a.7, 11a.8, 11a.9_
 
 - [x] 11. Implement the container build pipeline
-  - AWS ECR repository with lifecycle policy (keep 3 images)
-  - AWS S3 source bucket for CodeBuild inputs
+  - Amazon ECR repository with lifecycle policy (keep 3 images)
+  - Amazon S3 source bucket for CodeBuild inputs
   - AWS CodeBuild project on managed ARM64 Linux (`aws/codebuild/amazonlinux2-aarch64-standard`)
   - Dockerfile at `infra/agent_image/Dockerfile` based on `python:3.11-slim`
   - **Build trigger CR** (Lambda handler at `lambda/build_trigger/handler.py`) starts CodeBuild on source hash change, using the shared CR base from task 10
@@ -100,7 +100,7 @@ This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks 
   - _Requirements: 2.5, 2a.5, 14.6, 14.7, 11a.1–11a.9_
 
 - [x] 13. Implement `AgentStack` (with conditional AgentCore CRs)
-  - Bedrock Guardrail (harmful content filters + financial-advice denial topic) via native resource
+  - Amazon Bedrock Guardrail (harmful content filters + financial-advice denial topic) via native resource
   - **Native-or-CR probe** at synth time: if `cdk-lib` exposes `AWS::BedrockAgentCore::Runtime` and `::Memory`, use the native resources; otherwise fall back to CRs
   - **AgentCore Memory manager CR** (if needed) at `lambda/agentcore_memory/handler.py`: creates Memory resource and seeds `prior_deals` and `session_*` namespaces; delete is idempotent
   - **AgentCore Runtime manager CR** (if needed) at `lambda/agentcore_runtime/handler.py`: creates runtime pointing at ECR image, supports updates to image URI and IAM role, delete is idempotent; depends on the build waiter CR in task 11
@@ -150,9 +150,9 @@ This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks 
 
 - [x] 19. Implement `tools/text_to_sql.py`
   - Load schema from `data/schemas/target_companies.sql`
-  - Step 1: generate SQL from natural language via a small Bedrock model with schema-aware system prompt
+  - Step 1: generate SQL from natural language via a small Amazon Bedrock model with schema-aware system prompt
   - Step 2: validate generated SQL is SELECT-only (sqlparse)
-  - Step 3: execute via RDS Data API
+  - Step 3: run via RDS Data API
   - Echo generated SQL into the response and trace
   - Unit tests covering: valid SELECT, rejected INSERT/UPDATE/DELETE, rejected DDL
   - _Requirements: 2a.1, 2a.2, 2a.3, 2a.4, 2a.5_

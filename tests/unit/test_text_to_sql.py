@@ -45,7 +45,7 @@ def _execute_statement_response() -> dict:
         "records": [
             [
                 {"stringValue": "co-001"},
-                {"stringValue": "Acme Logistics"},
+                {"stringValue": "Example Corp"},
                 {"doubleValue": 250_000_000.0},
                 {"arrayValue": {"stringValues": ["ltl", "ftl"]}},
             ],
@@ -168,7 +168,7 @@ class TestQueryHappyPath:
 
         first_row = result["rows"][0]
         assert first_row["company_id"] == "co-001"
-        assert first_row["legal_name"] == "Acme Logistics"
+        assert first_row["legal_name"] == "Example Corp"
         assert first_row["revenue_usd"] == pytest.approx(250_000_000.0)
         assert first_row["service_lines"] == ["ltl", "ftl"]
 

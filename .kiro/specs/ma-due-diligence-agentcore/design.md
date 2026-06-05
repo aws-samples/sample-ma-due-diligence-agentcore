@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the technical design for the M&A Due Diligence Multi-Agent sample, implementing the requirements defined in `requirements.md`. The sample is a self-contained, deployable AWS solution that demonstrates a supervisor-plus-specialists agent pattern on AWS Bedrock AgentCore, grounded in synthetic transportation and logistics M&A data.
+This document describes the technical design for the M&A Due Diligence Multi-Agent sample, implementing the requirements defined in `requirements.md`. The sample is a self-contained, deployable AWS solution that demonstrates a supervisor-plus-specialists agent pattern on Amazon Amazon Bedrock AgentCore, grounded in synthetic transportation and logistics M&A data.
 
 The design prioritizes three qualities in this order:
 
@@ -10,7 +10,7 @@ The design prioritizes three qualities in this order:
 2. **Faithfulness to the blog's architecture diagram** — the layers in Figure 1 map to actual resources in the stack.
 3. **Production-adjacency** — least-privilege IAM, private networking for Aurora, observability on every path, but not over-engineered.
 
-The design assumes Python 3.11+, AWS CDK v2 (Python), and deployment to a single commercial AWS region where Bedrock AgentCore is generally available.
+The design assumes Python 3.11+, AWS CDK v2 (Python), and deployment to a single commercial AWS region where Amazon Bedrock AgentCore is generally available.
 
 ## Architecture
 
@@ -31,7 +31,7 @@ The design assumes Python 3.11+, AWS CDK v2 (Python), and deployment to a single
                              │ boto3 InvokeAgentRuntime
                              ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    AWS Bedrock AgentCore Runtime                     │
+│                    Amazon Amazon Bedrock AgentCore Runtime                     │
 │   ┌───────────────────────────────────────────────────────────────┐     │
 │   │                    Supervisor Agent (Strands)                 │     │
 │   │   Guardrails │ Memory (session) │ Trace (X-Ray) │ CloudWatch  │     │
@@ -70,7 +70,7 @@ Cross-cutting (one tool routed via AgentCore Gateway):
 | Agent Orchestration: Runtime | AgentCore Runtime hosting Strands supervisor + 4 specialists | Implemented |
 | Agent Orchestration: Strands SDK | Python Strands `Agent` per role, supervisor uses agents-as-tools | Implemented |
 | Agent Orchestration: Memory | AgentCore Memory with session + long-term prior-deal memos | Implemented |
-| Agent Orchestration: Guardrails | Bedrock Guardrail attached to supervisor | Implemented |
+| Agent Orchestration: Guardrails | Amazon Bedrock Guardrail attached to supervisor | Implemented |
 | Agent Orchestration: Identity | Not deployed (no JWT flow without frontend) | Extension |
 | Agent Orchestration: Gateway | Single Lambda-backed tool via Gateway | Implemented (minimal) |
 | Agent Orchestration: Observability | CloudWatch + X-Ray on all invocations | Implemented |
@@ -228,7 +228,7 @@ supervisor = Agent(
 
 Tools: `text_to_sql` (primary), `kb_retrieve` (for narrative context on surfaced targets).
 
-System prompt instructs the agent to (a) translate user criteria into SQL against the `target_companies` schema, (b) execute and format results, (c) optionally enrich the top results with KB snippets.
+System prompt instructs the agent to (a) translate user criteria into SQL against the `target_companies` schema, (b) run and format results, (c) optionally enrich the top results with KB snippets.
 
 **Financial Analysis (`agents/financial_analysis.py`)**
 
@@ -267,8 +267,8 @@ Calls `bedrock-agent-runtime:Retrieve` against the KB. Returns a structured resp
 
 Two-step tool:
 
-1. Generate SQL from natural language using a small Bedrock model with a system prompt that includes the schema (loaded from `data/schemas/target_companies.sql`).
-2. Execute via RDS Data API (no persistent DB connection from agent runtime).
+1. Generate SQL from natural language using a small Amazon Bedrock model with a system prompt that includes the schema (loaded from `data/schemas/target_companies.sql`).
+2. Run via RDS Data API (no persistent DB connection from agent runtime).
 
 Safety:
 - Agent is constrained to `SELECT` statements only (system prompt + SQL parse check).
@@ -381,7 +381,7 @@ s3://mna-docs-<account>-<region>/
 
 All files flagged as synthetic in frontmatter.
 
-### Bedrock Knowledge Base
+### Amazon Bedrock Knowledge Base
 
 - Data source: the S3 bucket above.
 - Chunking: default hierarchical chunking (works well for long documents).
@@ -408,7 +408,7 @@ CDK v2 Python stacks, deployed in dependency order:
 - Aurora credentials in Secrets Manager.
 - DynamoDB `mna-sessions` table.
 - S3 bucket for documents (block public, SSE-S3, versioned).
-- Bedrock Knowledge Base pointing at the S3 bucket and Aurora pgvector.
+- Amazon Bedrock Knowledge Base pointing at the S3 bucket and Aurora pgvector.
 - SSM parameters for ARNs: `/mna/aurora/cluster_arn`, `/mna/kb/id`, `/mna/docs/bucket`.
 
 ### 3. `EvaluatorStack`
@@ -422,14 +422,14 @@ CDK v2 Python stacks, deployed in dependency order:
 - SSM parameter `/mna/gateway/arn`.
 
 ### 5. `AgentStack`
-- Bedrock Guardrail (harmful content filters, financial-advice denial topic).
+- Amazon Bedrock Guardrail (harmful content filters, financial-advice denial topic).
 - AgentCore Memory resource (session + `prior_deals` namespace).
 - Build pipeline for the agent container (see "Container Build Pipeline" below).
 - AgentCore Runtime pointing at the ECR image produced by the build pipeline.
 - IAM role with permissions to:
-  - Invoke Bedrock models.
+  - Invoke Amazon Bedrock models.
   - Read from the KB (`bedrock-agent-runtime:Retrieve`).
-  - Execute statements via RDS Data API against the Aurora cluster (read-only policy on `mna.target_companies`).
+  - Run statements via RDS Data API against the Aurora cluster (read-only policy on `mna.target_companies`).
   - Read/write DynamoDB `mna-sessions`.
   - Read/write AgentCore Memory.
   - Invoke the Gateway and the evaluator Lambda.
@@ -444,7 +444,7 @@ Components (created inside `AgentStack` or a small `BuildStack` that `AgentStack
 - **ECR repository** — stores the agent image, lifecycle policy keeps the last 3 images.
 - **S3 source bucket** — CDK uploads `src/mna/`, `requirements.txt`, and `Dockerfile` as a zipped asset each deploy.
 - **CodeBuild project** — managed ARM64 build environment (`aws/codebuild/amazonlinux2-aarch64-standard`), runs `docker build` inside AWS, tags as `latest` plus a content hash, pushes to ECR.
-- **Build trigger Custom Resource** — CDK Custom Resource that starts the CodeBuild execution on every deploy when the source hash changes.
+- **Build trigger Custom Resource** — CDK Custom Resource that starts the CodeBuild build on every deploy when the source hash changes.
 - **Build waiter Lambda** — Custom Resource that polls CodeBuild every 30 seconds (15-minute timeout) and returns a compact success/failure response to CloudFormation. Required because CodeBuild's full `BatchGetBuilds` response can exceed the 4 KB Custom Resource limit.
 - **Dockerfile** (shipped in `infra/agent_image/Dockerfile`):
 
@@ -470,7 +470,7 @@ You never run `docker build`. Your local machine only needs AWS CLI, Node.js, an
 
 ### Custom Resources Inventory
 
-CloudFormation Custom Resources (CRs) are used wherever CloudFormation does not yet ship a native resource type for an operation we need, or where an asynchronous/imperative action must complete during stack creation. This design requires 6–8 CRs depending on CloudFormation and CDK support for AWS Bedrock AgentCore at implementation time.
+CloudFormation Custom Resources (CRs) are used wherever CloudFormation does not yet ship a native resource type for an operation we need, or where an asynchronous/imperative action must complete during stack creation. This design requires 6–8 CRs depending on CloudFormation and CDK support for Amazon Amazon Bedrock AgentCore at implementation time.
 
 | # | Custom Resource | Stack | Wraps | Always required? |
 |---|---|---|---|---|
@@ -634,9 +634,9 @@ These four prompts drive the notebook and `prompts.md`:
 | Agent | Prompt | What it demonstrates |
 |---|---|---|
 | Target Screening | "Screen our target pipeline for transportation companies with revenue between $100M and $500M, EBITDA margin above 12%, and no single-customer concentration above 25%. Rank the top 5." | Text-to-SQL on Aurora |
-| Financial Analysis | "Run a DCF on Acme Logistics using the CIM in the knowledge base. Flag any management projection that diverges from historical performance by more than 20%, and pull comparable multiples for transportation-logistics mid-market." | KB retrieval + Gateway tool + citations |
-| Strategic Fit | "Compare Acme Logistics' integration profile against our three most recent completed acquisitions. Identify the top three integration risks and cite the source memos." | Memory long-term retrieval |
-| Compliance Validation | "Review the Acme Logistics analysis in this session for completeness against our M&A governance checklist. List any claims without source citations." | Evaluator invocation, audit trail |
+| Financial Analysis | "Run a DCF on Example Corp using the CIM in the knowledge base. Flag any management projection that diverges from historical performance by more than 20%, and pull comparable multiples for transportation-logistics mid-market." | KB retrieval + Gateway tool + citations |
+| Strategic Fit | "Compare Example Corp' integration profile against our three most recent completed acquisitions. Identify the top three integration risks and cite the source memos." | Memory long-term retrieval |
+| Compliance Validation | "Review the Example Corp analysis in this session for completeness against our M&A governance checklist. List any claims without source citations." | Evaluator invocation, audit trail |
 
 ## Platform Support
 
@@ -673,7 +673,7 @@ A first-time Windows 11 reader with only AWS CLI v2, Python 3.11, Node.js 20, an
 ### Deployment-time Errors
 
 - **Unsupported region** — `check_region.sh` queries the AgentCore regions list (hardcoded + documented) and exits with a clear link.
-- **Bedrock model access not enabled** — `check_bedrock_access.sh` performs a cheap `bedrock:ListFoundationModels` + test invoke; surfaces the model access console link on failure.
+- **Amazon Bedrock model access not enabled** — `check_bedrock_access.sh` performs a cheap `bedrock:ListFoundationModels` + test invoke; surfaces the model access console link on failure.
 - **Aurora provisioning timeout** — CDK waits up to 20 minutes; if exceeded, surface CloudFormation event stream.
 - **KB ingestion failure** — `generate.py` polls ingestion status and prints failed document IDs.
 - **CodeBuild failure** — waiter Lambda reports failure with a link to the CodeBuild build URL and the CloudWatch log group (`/aws/codebuild/mna-agent-builder`). Most common causes: base image pull rate limit (retry), Python dependency resolution failure (surface in logs).
@@ -808,3 +808,7 @@ This design is considered complete when:
 - Every functional requirement from `requirements.md` maps to at least one component in this document.
 - Every non-functional requirement maps to an implementation mechanism (IAM role, config flag, deployment step, etc.).
 - A reviewer can read this document and implement the sample without ambiguity on structure, module boundaries, or data flow.
+
+## Conclusion
+
+This design satisfies every requirement in `requirements.md` while staying within the cost and complexity targets appropriate for an AWS sample. The architecture choices prioritise reader clarity and production-adjacency without over-engineering. The implementation plan (`tasks.md`) maps each design element to an executable task in dependency order.

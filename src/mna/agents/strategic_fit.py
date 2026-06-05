@@ -26,7 +26,7 @@ Outputs
 
 Example prompt
 --------------
-"Compare Acme Logistics' integration profile against our three most
+"Compare Example Corp' integration profile against our three most
 recent completed acquisitions. Identify the top three integration
 risks and cite the source memos."
 

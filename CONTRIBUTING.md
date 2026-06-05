@@ -150,7 +150,7 @@ tuple, in the same position as the supervisor registration order.
 ### 5. Update IAM
 
 The agent runtime role in `infra/stacks/agent_stack.py` must include
-any new permissions the agent needs (for example: AWS Bedrock
+any new permissions the agent needs (for example: Amazon Bedrock
 Knowledge Base access, AWS Lambda invoke, Amazon RDS Data API). Follow the least-privilege pattern used
 by the existing agents — scope every statement to a specific
 resource ARN, and document what the statement is for in a comment
@@ -375,3 +375,9 @@ improvements) do not require a CLA. For anything larger, follow the
 on your first PR with instructions.
 
 Thanks for contributing.
+
+---
+
+## Conclusion
+
+Thank you for your interest in improving this sample. Whether you are fixing a typo, adding a new agent, or hardening a Custom Resource, your contribution helps the community. If you have questions, open a GitHub issue and we will respond promptly.

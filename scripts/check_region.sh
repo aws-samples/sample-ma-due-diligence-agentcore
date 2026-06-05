@@ -4,7 +4,7 @@
 #
 # Purpose
 #   Verify that the AWS region the reader is about to deploy into is one
-#   where AWS Bedrock AgentCore is generally available.
+#   where Amazon Amazon Bedrock AgentCore is generally available.
 #
 # What "failure" means
 #   The script exits with status 1 and prints a pointer to the AgentCore
@@ -51,12 +51,12 @@ fi
 
 for supported in "${SUPPORTED_REGIONS[@]}"; do
   if [ "$REGION" = "$supported" ]; then
-    echo "OK: Region '$REGION' is a supported Bedrock AgentCore region."
+    echo "OK: Region '$REGION' is a supported Amazon Bedrock AgentCore region."
     exit 0
   fi
 done
 
-echo "ERROR: Region '$REGION' is not a supported Bedrock AgentCore region." >&2
+echo "ERROR: Region '$REGION' is not a supported Amazon Bedrock AgentCore region." >&2
 echo "       Supported regions: ${SUPPORTED_REGIONS[*]}" >&2
 echo "       Set AWS_REGION to one of the supported values and re-run." >&2
 echo "       For the authoritative list of AgentCore regions, see:" >&2

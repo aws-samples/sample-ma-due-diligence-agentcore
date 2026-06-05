@@ -3,7 +3,7 @@
 Implements the three-step pattern described in design.md → "Components
 and Interfaces" → "Tools" → ``tools/text_to_sql.py``:
 
-1. Ask a small Bedrock model to translate a natural-language question
+1. Ask a small Amazon Bedrock model to translate a natural-language question
    into a SQL statement, using the ``mna.target_companies`` schema as
    part of the system prompt so the LLM has the field names and types.
 2. Validate the generated SQL is SELECT-only. We deliberately avoid
@@ -39,7 +39,7 @@ if TYPE_CHECKING:  # pragma: no cover - import only for type checkers
 
 logger = get_logger(__name__)
 
-#: Default Bedrock model used to generate SQL from natural language.
+#: Default Amazon Bedrock model used to generate SQL from natural language.
 #: Uses the Haiku 4.5 inference profile — same as the specialist
 #: agents. The original Haiku 3.5 direct model ID was flagged Legacy
 #: and the runtime role's IAM policy only covers inference-profile
@@ -441,7 +441,7 @@ def query(
         Optional boto3 clients for dependency injection. Production
         callers should let the function construct its own.
     model_id:
-        Bedrock model used for SQL generation. Defaults to the small
+        Amazon Bedrock model used for SQL generation. Defaults to the small
         Haiku model.
 
     Returns

@@ -1,6 +1,6 @@
 """Build trigger Custom Resource handler.
 
-Starts an AWS CodeBuild execution whenever the source asset hash
+Starts an AWS CodeBuild build whenever the source asset hash
 changes so the agent container image in ECR stays in lock-step with
 ``src/mna/`` + ``requirements.txt`` + ``infra/agent_image/Dockerfile``.
 Paired with the build waiter Custom Resource
@@ -179,7 +179,7 @@ def _start_build(
 
 
 def _on_create_or_update(event: dict, _context: Any, boto3: Any) -> tuple[str, dict]:
-    """Kick off a CodeBuild execution and return a compact response."""
+    """Kick off a CodeBuild build and return a compact response."""
 
     props = _resource_properties(event)
     project_name = _required(props, "ProjectName")

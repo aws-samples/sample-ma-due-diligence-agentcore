@@ -3,9 +3,9 @@
 Role
 ----
 Surfaces candidate transportation and logistics acquisition targets
-from the structured target-company database (AWS Aurora PostgreSQL
+from the structured target-company database (Amazon Aurora PostgreSQL
 Serverless v2) and enriches the top hits with narrative context from
-the Bedrock Knowledge Base. This specialist is the primary reader of
+the Amazon Bedrock Knowledge Base. This specialist is the primary reader of
 the ``mna.target_companies`` table.
 
 Tools
@@ -15,7 +15,7 @@ Tools
   and executes it via the RDS Data API.
   See :mod:`mna.tools.text_to_sql`.
 - ``kb_retrieve`` (enrichment): Fetches grounding passages from the
-  Bedrock Knowledge Base to add qualitative context to the top
+  Amazon Bedrock Knowledge Base to add qualitative context to the top
   screening hits.
   See :mod:`mna.tools.kb_retrieve`.
 
@@ -68,7 +68,7 @@ def text_to_sql(natural_language: str) -> dict[str, Any]:
 
 @tool
 def kb_retrieve(query: str, top_k: int = 5) -> list[dict[str, Any]]:
-    """Fetch grounding passages from the Bedrock Knowledge Base.
+    """Fetch grounding passages from the Amazon Bedrock Knowledge Base.
 
     Wraps :func:`mna.tools.kb_retrieve.retrieve`. Returns a list of
     citation dicts (``{text, source, page, score}``) suitable for

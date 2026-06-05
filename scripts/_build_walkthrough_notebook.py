@@ -152,7 +152,7 @@ _SPECIALIST_PROMPTS: list[tuple[str, str, str, str]] = [
         "financial_analysis",
         "Financial Analysis — KB + Gateway-backed tool",
         (
-            "Run a DCF on Acme Logistics using the CIM in the knowledge base. "
+            "Run a DCF on Example Corp using the CIM in the knowledge base. "
             "Flag any management projection that diverges from historical "
             "performance by more than 20%, and pull comparable multiples for "
             "transportation-logistics mid-market."
@@ -163,7 +163,7 @@ _SPECIALIST_PROMPTS: list[tuple[str, str, str, str]] = [
         "strategic_fit",
         "Strategic Fit — long-term memory over prior deals",
         (
-            "Compare Acme Logistics' integration profile against our three most "
+            "Compare Example Corp' integration profile against our three most "
             "recent completed acquisitions. Identify the top three integration "
             "risks and cite the source memos."
         ),
@@ -173,7 +173,7 @@ _SPECIALIST_PROMPTS: list[tuple[str, str, str, str]] = [
         "compliance_validation",
         "Compliance Validation — evaluator invocation",
         (
-            "Review the Acme Logistics analysis in this session for completeness "
+            "Review the Example Corp analysis in this session for completeness "
             "against our M&A governance checklist. List any claims without source "
             "citations."
         ),

@@ -47,9 +47,9 @@ prior-deal memos in the AgentCore Memory `prior_deals` namespace.
   (or `.pdf`) for the leader, cited inline as
   `[source: s3://.../cims/<slug>.md, p. N]`.
 
-**What this demonstrates:** Text-to-SQL over AWS Aurora PostgreSQL
+**What this demonstrates:** Text-to-SQL over Amazon Aurora PostgreSQL
 via the RDS Data API (Requirement 2a), SELECT-only SQL safety, and
-Bedrock Knowledge Base retrieval used as enrichment (Requirement 2.1,
+Amazon Bedrock Knowledge Base retrieval used as enrichment (Requirement 2.1,
 2.2).
 
 ---
@@ -130,9 +130,15 @@ and combined grounding across memory and the KB.
   response envelope for downstream auditability.
 
 **What this demonstrates:** End-to-end safety and evaluation
-(Requirement 4): Bedrock Guardrail on the supervisor, the custom
+(Requirement 4): Amazon Bedrock Guardrail on the supervisor, the custom
 citation-check evaluator producing a pass/fail result with per-claim
 detail (Requirement 4.2, 4.3), and the evaluator result stored
 alongside the agent response (Requirement 4.4). Running this prompt
 after the first three exercises the full audit loop the sample is
 designed to demonstrate.
+
+---
+
+## Conclusion
+
+The four prompts above exercise every specialist agent end-to-end against the synthetic dataset. Each demonstrates a distinct architectural capability — text-to-SQL, Knowledge Base retrieval, AgentCore Memory, AgentCore Gateway tools, and the citation-check evaluator. Use them as starting points and adapt the criteria, target names, or analysis scope to explore the system further. All data is synthetic and clearly labelled as such.

@@ -3,12 +3,12 @@
 # check_bedrock_access.sh
 #
 # Purpose
-#   Verify that the caller's AWS account has Bedrock model access enabled
+#   Verify that the caller's AWS account has Amazon Bedrock model access enabled
 #   for the Anthropic Claude and Amazon Nova model families that the
-#   sample depends on. Bedrock model access is an opt-in per region.
+#   sample depends on. Amazon Bedrock model access is an opt-in per region.
 #
 # What "failure" means
-#   The script exits with status 1 and prints a link to the Bedrock model
+#   The script exits with status 1 and prints a link to the Amazon Bedrock model
 #   access console. No resources are created yet, so the reader just
 #   requests access (one click per family) and re-runs.
 #
@@ -55,7 +55,7 @@ for provider in anthropic amazon; do
     --output text 2>/dev/null || true)"
 
   if [ -z "$models" ] || [ "$models" = "None" ]; then
-    echo "ERROR: No Bedrock models returned for provider '$provider' in $REGION." >&2
+    echo "ERROR: No Amazon Bedrock models returned for provider '$provider' in $REGION." >&2
     echo "       Enable access for the $provider model family here:" >&2
     echo "         $BEDROCK_ACCESS_CONSOLE" >&2
     fail=1
@@ -67,10 +67,10 @@ for provider in anthropic amazon; do
 done
 
 if [ "$fail" -ne 0 ]; then
-  echo "ERROR: Bedrock model access is not fully enabled." >&2
+  echo "ERROR: Amazon Bedrock model access is not fully enabled." >&2
   echo "       Request access for Anthropic Claude and Amazon Nova families:" >&2
   echo "         $BEDROCK_ACCESS_CONSOLE" >&2
   exit 1
 fi
 
-echo "OK: Bedrock model access enabled for required providers."
+echo "OK: Amazon Bedrock model access enabled for required providers."
