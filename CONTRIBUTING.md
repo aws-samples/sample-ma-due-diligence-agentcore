@@ -331,7 +331,7 @@ Copy-paste this into your PR description and tick each box.
 - [ ] PR title starts with the affected area: `agent:`, `tool:`,
       `infra:`, `docs:`, `tests:`, or `chore:`.
 - [ ] PR description links to the GitHub issue (if any) and
-      summarizes the "why", not just the "what".
+      summarizes the "why", not only the "what".
 - [ ] I have read the relevant sections of `design.md` and
       `requirements.md`.
 - [ ] `pytest tests/unit/` passes locally.
@@ -371,7 +371,7 @@ agree that your contribution is licensed under the same terms.
 AWS Samples requires a one-time signed CLA for substantive external
 contributions. Trivial fixes (typos, one-line bug fixes, documentation
 improvements) do not require a CLA. For anything larger, follow the
-[AWS CLA flow](https://github.com/aws/aws-cla) — the bot will comment
+[AWS CLA process](https://github.com/aws/aws-cla) — the bot will comment
 on your first PR with instructions.
 
 Thanks for contributing.

@@ -6,8 +6,7 @@ using the [Strands Agents SDK](https://strandsagents.com/). The sample
 models an end-to-end M&A due-diligence workflow in the transportation
 and logistics industry, grounded entirely in synthetic data.
 
-This sample accompanies a companion AWS Machine Learning blog post
-(coming soon). It is optimised for three things, in order:
+This sample accompanies a companion AWS Machine Learning blog post (coming soon). It is optimised for three things, in order:
 
 1. **Reader experience** — one command to deploy, one command to tear
    down, a Jupyter notebook as the primary interactive surface.
@@ -23,7 +22,7 @@ This sample accompanies a companion AWS Machine Learning blog post
 
 ---
 
-## Table of contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
@@ -137,21 +136,37 @@ deploy time. See the authoritative list in the
 
 ---
 
-## Quick start
+## Quick Start
 
-```bash
-# macOS / Linux
-git clone https://github.com/aws-samples/sample-ma-due-diligence-agentcore.git
-cd sample-ma-due-diligence-agentcore
-./deploy.sh
-```
+**macOS / Linux:**
 
-```powershell
-# Windows
-git clone https://github.com/aws-samples/sample-ma-due-diligence-agentcore.git
-cd sample-ma-due-diligence-agentcore
-.\deploy.ps1
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/aws-samples/sample-ma-due-diligence-agentcore.git
+   ```
+2. Change into the project directory:
+   ```bash
+   cd sample-ma-due-diligence-agentcore
+   ```
+3. Run the deploy script:
+   ```bash
+   ./deploy.sh
+   ```
+
+**Windows:**
+
+1. Clone the repository:
+   ```powershell
+   git clone https://github.com/aws-samples/sample-ma-due-diligence-agentcore.git
+   ```
+2. Change into the project directory:
+   ```powershell
+   cd sample-ma-due-diligence-agentcore
+   ```
+3. Run the deploy script:
+   ```powershell
+   .\deploy.ps1
+   ```
 
 The deploy script will:
 
@@ -180,7 +195,7 @@ Skip flags for re-runs:
 
 ---
 
-## Running the walkthrough
+## Running the Walkthrough
 
 Invoke agents from the CLI. Each command targets a single specialist
 and exercises a distinct capability of the architecture:
@@ -227,10 +242,16 @@ mna --json invoke financial_analysis "Run a DCF on Example Corp using the CIM." 
 Note: `--json` goes before the subcommand. Log lines go to stderr
 and won't pollute the JSON file.
 
-**Step 2 — split the response text and citations into separate files:**
+**Step 2 — extract the response text:**
 
 ```bash
-python -c "import json,pathlib;d=json.loads(pathlib.Path('run.json').read_text(encoding='utf-8'));pathlib.Path('response.txt').write_text(d['text'],encoding='utf-8');pathlib.Path('citations.json').write_text(json.dumps(d['citations']),encoding='utf-8')"
+python -c "import json,pathlib;d=json.loads(pathlib.Path('run.json').read_text(encoding='utf-8'));pathlib.Path('response.txt').write_text(d['text'],encoding='utf-8')"
+```
+
+**Step 3 — extract the citations:**
+
+```bash
+python -c "import json,pathlib;d=json.loads(pathlib.Path('run.json').read_text(encoding='utf-8'));pathlib.Path('citations.json').write_text(json.dumps(d['citations']),encoding='utf-8')"
 ```
 
 **Step 3 — run the evaluator:**
@@ -273,7 +294,7 @@ module, so there is no invocation logic duplicated across surfaces.
 
 ---
 
-## Example prompts
+## Example Prompts
 
 Four ready-to-copy prompts, one per specialist, are documented in
 [`prompts.md`](./prompts.md). Each prompt includes the expected agent,
@@ -291,7 +312,7 @@ Summary:
 
 ---
 
-## What's implemented vs. extension
+## What's Implemented vs. Extension
 
 The table below mirrors the architecture layers in the blog's Figure 1.
 "Implemented" means shipped in this sample; "Extension" means out of
@@ -350,7 +371,7 @@ Cost controls baked into the sample:
 
 ---
 
-## IAM summary
+## IAM Summary
 
 | Role | Principal | Key permissions |
 |---|---|---|
@@ -421,9 +442,9 @@ the full output.
 
 ---
 
-## Documentation and references
+## Documentation and References
 
-- Companion AWS Machine Learning blog post — _Coming Soon._ A link will be added here once the post is published.
+- Companion AWS Machine Learning blog post — coming soon.
 - [Amazon Bedrock AgentCore documentation](https://docs.aws.amazon.com/bedrock-agentcore/)
 - [Strands Agents SDK documentation](https://strandsagents.com/)
 - [Knowledge Bases for Amazon Bedrock documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html)

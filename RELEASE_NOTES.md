@@ -6,8 +6,7 @@
 
 First public release of the **M&A Due Diligence Multi-Agent** AWS
 sample. This release accompanies the AWS Machine Learning blog post
-_"Build a multi-agent M&A due-diligence assistant on Amazon Bedrock
-AgentCore"_ (link will be added once the post is published).
+the blog post (link will be added at publication time).
 
 ### What ships in v1.0.0
 
@@ -129,9 +128,7 @@ This sample accompanies an AWS Machine Learning blog post that
 walks through the architecture, the agent orchestration pattern,
 and the reader journey:
 
-- **Blog post:** _"Build a multi-agent M&A due-diligence assistant
-  on Amazon Bedrock AgentCore"_ — link will be added here once the
-  post is published.
+- **Blog post:** Link will be added at publication time.
 
 The README's "Documentation and references" section is the
 canonical place to find the blog link after publication.

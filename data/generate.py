@@ -72,7 +72,7 @@ DEFAULT_SEED = 42
 #: more than the Requirement 5.2 minimum of 20 rows.
 COMPANY_NAMES: tuple[str, ...] = (
     "Example Corp",
-    "Anchor Freightlines",
+    "Example Anchor Freight",
     "AnyCompany Freight",
     "Cascade Transport",
     "Continental Drayage",
@@ -176,7 +176,7 @@ PRIOR_DEALS: tuple[PriorDealSeed, ...] = (
         integration_duration_months=20,
     ),
     PriorDealSeed(
-        memo_id="prior_deal_example_freight_2021",
+        memo_id="prior_deal_anycompany_freight_2021",
         target_name="Pinnacle Freight",
         close_year=2021,
         deal_size_usd=180_000_000,

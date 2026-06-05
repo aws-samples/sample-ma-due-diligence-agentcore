@@ -25,7 +25,7 @@ Pinned to Claude Sonnet 4.5 by default
 Guardrail
 ---------
 When ``MNA_GUARDRAIL_ID`` is set, the supervisor attaches the
-specified AWS Bedrock Guardrail to its model. The Guardrail is configured
+specified Amazon Bedrock Guardrails to its model. The Guardrail is configured
 with harmful-content filters and a financial-advice denial topic per
 design §Safety Design.
 

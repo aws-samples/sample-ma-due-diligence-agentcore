@@ -134,10 +134,10 @@ def test_strategic_fit_memory_uses_prior_deals_namespace():
         return []
 
     with patch.object(strategic_fit, "retrieve_memory_fn", _fake_retrieve_memory):
-        strategic_fit.retrieve_memory(query="Acme", limit=3)
+        strategic_fit.retrieve_memory(query="Example Corp", limit=3)
 
     assert captured["namespace"] == "prior_deals"
-    assert captured["query"] == "Acme"
+    assert captured["query"] == "Example Corp"
     assert captured["limit"] == 3
 
 

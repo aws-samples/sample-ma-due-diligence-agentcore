@@ -4,11 +4,11 @@
 
 This document defines the requirements for an open-source AWS sample that demonstrates a multi-agent system for M&A due diligence in the transportation and logistics industry. The sample accompanies an AWS Machine Learning blog post and must enable readers to deploy, run, and tear down a working system with minimal friction.
 
-The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coordinated by a supervisor agent, all built with the Strands SDK. Agents ground their responses in synthetic M&A documents via Knowledge Bases for Amazon Bedrock, retain context through AgentCore Memory, and are subject to safety controls via AWS Bedrock Guardrails and a custom citation-validation evaluator.
+The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents coordinated by a supervisor agent, all built with the Strands SDK. Agents ground their responses in synthetic M&A documents via Knowledge Bases for Amazon Bedrock, retain context through AgentCore Memory, and are subject to safety controls via AWS Bedrock Guardrails and a custom citation-validation evaluator.
 
 ### In Scope (v1)
 
-- Multi-agent orchestration using Strands SDK on AWS Bedrock AgentCore Runtime
+- Multi-agent orchestration using Strands SDK on Amazon Bedrock AgentCore Runtime
 - Four specialist agents coordinated by a supervisor: Target Screening, Financial Analysis, Strategic Fit, Compliance Validation
 - RAG over synthetic M&A documents via Knowledge Bases for Amazon Bedrock
 - Text-to-SQL over structured target-company data in AWS Aurora PostgreSQL Serverless v2
@@ -35,20 +35,20 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 1: Multi-Agent Orchestration
 
-**User Story:** As a reader following the walkthrough, I want to interact with a coordinated set of specialist agents, enabling them to see how multi-agent collaboration handles M&A due diligence tasks.
+**User Story:** A reader following the walkthrough needs to interact with a coordinated set of specialist agents, enabling them to see how multi-agent collaboration handles M&A due diligence tasks.
 
 #### Acceptance Criteria
 
 1. WHEN the system is deployed THEN it SHALL provide exactly one supervisor agent that routes prompts to specialist agents.
 2. WHEN the system is deployed THEN it SHALL provide four specialist agents: Target Screening, Financial Analysis, Strategic Fit, and Compliance Validation.
 3. WHERE an agent is implemented THE system SHALL use the Strands SDK.
-4. WHERE an agent runs THE system SHALL host it on AWS Bedrock AgentCore Runtime.
+4. WHERE an agent runs THE system SHALL host it on Amazon Bedrock AgentCore Runtime.
 5. WHEN the supervisor receives a prompt THEN it SHALL invoke one or more specialists using the agents-as-tools pattern based on prompt intent.
 6. WHEN a specialist returns a response grounded in retrieved documents THEN that response SHALL include inline citations resolvable to source documents.
 
 ### Requirement 2: Knowledge Retrieval, Structured Data, and Memory
 
-**User Story:** As a reader, I want agents to ground their answers in synthetic organizational documents, query structured target data, and retain context across turns, enabling them to validate the blog's claims about RAG, text-to-SQL, and knowledge retention.
+**User Story:** A reader needs agents to ground their answers in synthetic organizational documents, query structured target data, and retain context across turns, enabling them to validate the blog's claims about RAG, text-to-SQL, and knowledge retention.
 
 #### Acceptance Criteria
 
@@ -61,7 +61,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 2a: Text-to-SQL
 
-**User Story:** As a reader, I want the Target Screening agent to answer natural-language questions about structured target data, enabling them to see how agents translate user intent into auditable SQL queries.
+**User Story:** A reader needs the Target Screening agent to answer natural-language questions about structured target data, enabling them to see how agents translate user intent into auditable SQL queries.
 
 #### Acceptance Criteria
 
@@ -94,7 +94,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 5: Synthetic Data
 
-**User Story:** As a reader, I want a ready-made synthetic dataset, enabling them to run the example prompts end-to-end without sourcing my own M&A documents.
+**User Story:** A reader needs a ready-made synthetic dataset, enabling them to run the example prompts end-to-end without sourcing my own M&A documents.
 
 #### Acceptance Criteria
 
@@ -106,7 +106,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 6: Example Prompts
 
-**User Story:** As a reader, I want ready-to-run prompts for each specialist agent, enabling them to reproduce the blog's demonstrations without designing prompts myself.
+**User Story:** A reader needs ready-to-run prompts for each specialist agent, enabling them to reproduce the blog's demonstrations without designing prompts myself.
 
 #### Acceptance Criteria
 
@@ -116,7 +116,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 7: User Interfaces
 
-**User Story:** As a reader, I want a notebook that mirrors the blog narrative and a CLI for scripting, enabling them to both learn the system and integrate it into my own tooling.
+**User Story:** A reader needs a notebook that mirrors the blog narrative and a CLI for scripting, enabling them to both learn the system and integrate it into my own tooling.
 
 #### Acceptance Criteria
 
@@ -127,7 +127,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 8: Deployment and Cleanup
 
-**User Story:** As a reader, I want one-command deploy and cleanup, enabling them to try the sample without risking orphaned resources or unexpected charges.
+**User Story:** A reader needs one-command deploy and cleanup, enabling them to try the sample without risking orphaned resources or unexpected charges.
 
 #### Acceptance Criteria
 
@@ -149,17 +149,17 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 10: Operating System and Regional Availability
 
-**User Story:** As a reader, I want the sample to fail fast if my environment is unsupported, so that I don't waste time debugging avoidable errors.
+**User Story:** A reader needs the sample to fail fast if my environment is unsupported, so that I don't waste time debugging avoidable errors.
 
 #### Acceptance Criteria
 
-1. WHERE the sample is deployed THE target AWS region SHALL be one where AWS Bedrock AgentCore is generally available.
+1. WHERE the sample is deployed THE target AWS region SHALL be one where Amazon Bedrock AgentCore is generally available.
 2. WHEN deployment is attempted in an unsupported region THEN the system SHALL fail fast with a clear error message and link to the AgentCore regions documentation.
 3. WHEN the README is delivered THEN it SHALL document all supported regions.
 
 ### Requirement 11: Runtime and Dependencies
 
-**User Story:** As a maintainer, I want a controlled dependency surface, so that the sample remains reproducible and maintainable.
+**User Story:** A maintainer needs a controlled dependency surface, so that the sample remains reproducible and maintainable.
 
 #### Acceptance Criteria
 
@@ -173,7 +173,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 11a: CloudFormation Custom Resource Safety
 
-**User Story:** As a reader, I want CloudFormation stack operations to succeed or fail fast, so that I never have to wait hours for a stuck stack deletion.
+**User Story:** A reader needs CloudFormation stack operations to succeed or fail fast, so that I never have to wait hours for a stuck stack deletion.
 
 #### Acceptance Criteria
 
@@ -199,7 +199,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 13: Cost
 
-**User Story:** As a reader, I want predictable, low cost to try the sample, enabling them to evaluate the solution without budget concerns.
+**User Story:** A reader needs predictable, low cost to try the sample, enabling them to evaluate the solution without budget concerns.
 
 #### Acceptance Criteria
 
@@ -209,7 +209,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 14: Security
 
-**User Story:** As a security-conscious reader, I want the sample to follow least-privilege defaults, enabling them to adopt it without introducing security issues.
+**User Story:** As a security-conscious reader needs the sample to follow least-privilege defaults, enabling them to adopt it without introducing security issues.
 
 #### Acceptance Criteria
 
@@ -223,7 +223,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 15: Code Quality
 
-**User Story:** As a maintainer, I want consistent code quality, so that contributions remain easy to review and the sample stays trustworthy.
+**User Story:** A maintainer needs consistent code quality, so that contributions remain easy to review and the sample stays trustworthy.
 
 #### Acceptance Criteria
 
@@ -234,7 +234,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 16: Documentation
 
-**User Story:** As a reader, I want complete documentation, enabling them to deploy, understand, extend, and troubleshoot the sample without external help.
+**User Story:** A reader needs complete documentation, enabling them to deploy, understand, extend, and troubleshoot the sample without external help.
 
 #### Acceptance Criteria
 
@@ -245,7 +245,7 @@ The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coo
 
 ### Requirement 17: Maintainability
 
-**User Story:** As a maintainer, I want a clean project structure, so that future updates do not require invasive refactors.
+**User Story:** A maintainer needs a clean project structure, so that future updates do not require invasive refactors.
 
 #### Acceptance Criteria
 
@@ -269,7 +269,7 @@ The sample is considered complete when all of the following are true:
 
 1. Readers have an AWS account with AWS Bedrock model access enabled for Anthropic Claude and Amazon Nova model families.
 2. Readers have AWS CLI v2 configured with credentials that grant CloudFormation, Lambda, S3, DynamoDB, IAM, Bedrock, and AgentCore permissions.
-3. AWS Bedrock AgentCore remains generally available in at least one commercial AWS region at the time of publication.
+3. Amazon Bedrock AgentCore remains generally available in at least one commercial AWS region at the time of publication.
 4. The Strands SDK remains the recommended orchestration framework for AgentCore at the time of publication.
 
 ## Conclusion

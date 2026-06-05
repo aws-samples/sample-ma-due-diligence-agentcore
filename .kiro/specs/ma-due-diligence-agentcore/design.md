@@ -47,7 +47,7 @@ The design assumes Python 3.11+, AWS CDK v2 (Python), and deployment to a single
         │ SQL tool     │ KB retrieve  │ Memory read  │ Citation check
         ▼              ▼              ▼              ▼
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐
-│ Aurora PG    │ │ Bedrock KB   │ │ AgentCore    │ │ Custom Evaluator │
+│ Aurora PG    │ │ Knowledge Bases for Amazon Bedrock   │ │ AgentCore    │ │ Custom Evaluator │
 │ Serverless v2│ │ (S3 backed)  │ │ Memory       │ │ (Lambda)         │
 │ (private VPC)│ │              │ │              │ │                  │
 └──────────────┘ └──────┬───────┘ └──────────────┘ └──────────────────┘
@@ -76,7 +76,7 @@ Cross-cutting (one tool routed via AgentCore Gateway):
 | Agent Orchestration: Observability | CloudWatch + X-Ray on all invocations | Implemented |
 | Data: DynamoDB | Session/cache table | Implemented |
 | Data: Aurora PostgreSQL | Serverless v2, target-company schema, text-to-SQL | Implemented |
-| Data: Bedrock KB | Unstructured RAG over synthetic CIMs, memos, filings | Implemented |
+| Data: Knowledge Bases for Amazon Bedrock | Unstructured RAG over synthetic CIMs, memos, filings | Implemented |
 | Data: S3 | Source documents + generated data | Implemented |
 | Gateway Targets: Lambda | One market-data mock Lambda | Implemented |
 | Gateway Targets: External APIs, MCP servers, API Gateway | Not deployed | Extension |
@@ -127,7 +127,7 @@ sample-ma-due-diligence-agentcore/
 │   │   └── compliance_validation.py
 │   ├── tools/
 │   │   ├── __init__.py
-│   │   ├── kb_retrieve.py        # Bedrock KB retrieval with citation shape
+│   │   ├── kb_retrieve.py        # Knowledge Bases for Amazon Bedrock retrieval with citation shape
 │   │   ├── text_to_sql.py        # NL → SQL → Aurora via RDS Data API
 │   │   ├── market_data.py        # Calls Gateway-backed Lambda
 │   │   └── memory.py             # AgentCore Memory wrappers
@@ -548,7 +548,7 @@ def _send_response(event, context, status, physical_id, data, reason):
     try:
         urllib.request.urlopen(req, timeout=10)
     except Exception:
-        logger.exception("Failed to send CFN response; stack may hang")
+        logger.exception("Failed to send CFN response; stack may stop responding")
 ```
 
 **3. Response size safety.** The `Data` dict must remain under 4 KB. Large strings (CodeBuild build outputs, SQL result sets, long ARN lists) must be truncated or replaced with a CloudWatch log reference.
@@ -735,7 +735,7 @@ Documented in the README:
 | `AgentRuntimeRole` | AgentCore Runtime | Invoke Bedrock, Retrieve KB, RDS Data API (read-only), DynamoDB RW, Memory RW, Invoke Gateway, Invoke evaluator Lambda |
 | `EvaluatorLambdaRole` | Lambda | CloudWatch Logs only |
 | `MarketDataLambdaRole` | Lambda | CloudWatch Logs only |
-| `KnowledgeBaseRole` | Bedrock KB service | Read S3 bucket, write Aurora pgvector |
+| `KnowledgeBaseRole` | Knowledge Bases for Amazon Bedrock service | Read S3 bucket, write Aurora pgvector |
 | `DeploymentRole` | Reader's credentials (not created by sample) | Documented prereq |
 
 Every agent-callable AWS permission is scoped with resource ARNs — no `*` resources except where required (e.g., `bedrock:InvokeModel` for model ARNs).
@@ -769,7 +769,7 @@ Target: under $5 USD for a full deploy-run-cleanup cycle (~1 hour).
 | Aurora Serverless v2 | ~$0.12 | 1 hour at 0.5 ACU minimum |
 | AgentCore Runtime | ~$0.30 | ~5 minutes of active compute across prompts |
 | Bedrock (Claude + Titan Embed) | ~$1.00 | 4 prompts + embedding ingestion |
-| Bedrock KB (vector ops) | ~$0.20 | Serverless pricing |
+| Knowledge Bases for Amazon Bedrock (vector ops) | ~$0.20 | Serverless pricing |
 | DynamoDB | <$0.01 | On-demand, minimal writes |
 | Lambda (evaluator + market data + waiter) | <$0.01 | Free tier |
 | CodeBuild (ARM64) | <$0.05 | ~5 min per deploy, free tier covers first 100 min/month |
