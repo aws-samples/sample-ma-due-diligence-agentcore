@@ -65,29 +65,10 @@ supervisor → specialist → tool call hierarchy.
 ## Architecture
 
 See **Figure 1** in the companion blog post for the annotated diagram.
-A condensed ASCII rendering is reproduced below for quick reference;
-the canonical layer mapping is in the table at
-[What's implemented vs. extension](#whats-implemented-vs-extension).
+The canonical layer mapping is in the table at
+[What's Implemented vs. Extension](#whats-implemented-vs-extension).
 
-```
-                        Reader surfaces
-             walkthrough.ipynb            CLI (python -m cli.invoke)
-                    \_________ mna.client __________/
-                                    |
-                                    | boto3 InvokeAgentRuntime
-                                    v
-                 ┌──────────────── AgentCore Runtime ────────────────┐
-                 │ Supervisor (Strands)  Guardrail  Memory  Tracing  │
-                 │      ├── Target Screening  (text_to_sql)          │
-                 │      ├── Financial Analysis (kb + market_data)    │
-                 │      ├── Strategic Fit      (kb + memory)         │
-                 │      └── Compliance Valid.  (kb + citation_check) │
-                 └───────────────────────────────────────────────────┘
-                          |               |             |
-                   Amazon Aurora      Amazon Bedrock    AgentCore Gateway
-                   Serverless v2      Knowledge Bases   → market-data λ
-                   (pgvector + SQL)   (S3)
-```
+![Architecture diagram](assets/arch_diagram.png)
 
 Infrastructure-as-Code is AWS CDK v2 (Python). Stacks deploy in this
 dependency order:
