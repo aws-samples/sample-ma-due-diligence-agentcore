@@ -172,7 +172,7 @@ Run the following to double-check that no billable resources remain
     --query "repositories[?contains(repositoryName, 'mna')].repositoryName" ``
     --output text
 
-  # Amazon Bedrock Knowledge Bases:
+  # Knowledge Bases for Amazon Bedrock:
   aws bedrock-agent list-knowledge-bases --region $Region ``
     --query "knowledgeBaseSummaries[?contains(name, 'mna')].{id:knowledgeBaseId,name:name}" ``
     --output table

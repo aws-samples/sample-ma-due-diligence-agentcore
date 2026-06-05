@@ -51,10 +51,10 @@ more specialists:
 
 | Agent | Role | Primary tool(s) |
 |---|---|---|
-| Target Screening | Translate natural language into SQL and surface candidates from a target-company table. | Text-to-SQL over Amazon Aurora (PostgreSQL) + Amazon Bedrock Knowledge Bases |
-| Financial Analysis | Run a DCF and pull comparable-company multiples with inline citations on every numeric input. | Amazon Bedrock Knowledge Bases + AgentCore Gateway-backed market-data tool |
-| Strategic Fit | Compare the current target against prior deals stored in long-term memory. | Amazon Bedrock Knowledge Bases + AgentCore Memory (`prior_deals` namespace) |
-| Compliance Validation | Audit a response against the M&A governance checklist and flag any uncited claim. | Amazon Bedrock Knowledge Bases + custom citation-check evaluator AWS Lambda |
+| Target Screening | Translate natural language into SQL and surface candidates from a target-company table. | Text-to-SQL over Amazon Aurora (PostgreSQL) + Knowledge Bases for Amazon Bedrock |
+| Financial Analysis | Run a DCF and pull comparable-company multiples with inline citations on every numeric input. | Knowledge Bases for Amazon Bedrock + AgentCore Gateway-backed market-data tool |
+| Strategic Fit | Compare the current target against prior deals stored in long-term memory. | Knowledge Bases for Amazon Bedrock + AgentCore Memory (`prior_deals` namespace) |
+| Compliance Validation | Audit a response against the M&A governance checklist and flag any uncited claim. | Knowledge Bases for Amazon Bedrock + custom citation-check evaluator AWS Lambda |
 
 Every response is routed through Amazon Bedrock Guardrails, every factual
 claim is required to cite a source, and every invocation produces a
@@ -133,7 +133,7 @@ Supported AWS regions (Amazon Bedrock AgentCore GA):
 
 `scripts/check_region.sh` / `check_region.ps1` enforces this list at
 deploy time. See the authoritative list in the
-[AgentCore regions documentation](https://docs.aws.amazon.com/general/latest/gr/bedrock_agentcore.html).
+[AgentCore regions documentation](https://docs.aws.amazon.com/bedrock-agentcore/latest/userguide/regions.html).
 
 ---
 
@@ -310,8 +310,8 @@ exists.
 | Agent Orchestration — Observability | CloudWatch Logs + X-Ray on every invocation | Dashboards, alarms, anomaly detection |
 | Data — Amazon Aurora PostgreSQL | Serverless v2 (0.5-2 ACU), target-companies schema, text-to-SQL | Read replicas, multi-region |
 | Data — Amazon DynamoDB | `mna-sessions` per-turn audit log (prompt, response, citations, trace id, evaluator result) with 7-day TTL | Global tables |
-| Data — Amazon Bedrock Knowledge Bases | Synthetic CIMs, financials, press packs, governance checklist | Cross-account KBs, document-level ACLs |
-| Data — S3 | Documents bucket (block public, SSE-S3, versioned) | SSE-KMS with CMK, Object Lock |
+| Data — Knowledge Bases for Amazon Bedrock | Synthetic CIMs, financials, press packs, governance checklist | Cross-account KBs, document-level ACLs |
+| Data — S3 | Documents bucket (block public, SSE-S3, versioned) | SSE-KMS with customer managed key, Object Lock |
 | Gateway Targets — Lambda | One market-data mock Lambda | Additional tools (HTTP APIs, third-party APIs, SaaS connectors) |
 | Evaluation — Custom evaluator | Citation-check Lambda + local mirror | AgentCore Evaluations, LLM-as-judge, continuous monitoring |
 | Security — IAM | Least-privilege roles, scoped resource ARNs | Cedar policies |
@@ -330,7 +330,7 @@ hour of wall time).
 | Aurora Serverless v2 | ~$0.12 | 1 hour at 0.5 ACU minimum (or 0 ACU if configured to scale to zero) |
 | AgentCore Runtime | ~$0.30 | ~5 minutes of active compute across the four prompts |
 | Bedrock (Claude Sonnet 4.5 + Haiku + Titan Embed) | ~$1.00 | 4 prompts + embedding ingestion |
-| Amazon Bedrock Knowledge Bases (vector ops) | ~$0.20 | Serverless pricing |
+| Knowledge Bases for Amazon Bedrock (vector ops) | ~$0.20 | Serverless pricing |
 | DynamoDB | <$0.01 | On-demand, minimal writes |
 | Lambda (evaluator + market-data + build waiter) | <$0.01 | Free tier |
 | CodeBuild (ARM64 Linux) | <$0.05 | ~5 min per deploy; free tier covers first 100 min/month |
@@ -357,7 +357,7 @@ Cost controls baked into the sample:
 | `AgentRuntimeRole` | AgentCore Runtime | `bedrock:InvokeModel`, `bedrock-agent-runtime:Retrieve`, RDS Data API (read-only on `mna.target_companies`), DynamoDB `mna-sessions` RW, AgentCore Memory RW, Gateway invoke, citation-check Lambda invoke |
 | `EvaluatorLambdaRole` | Lambda service | CloudWatch Logs only |
 | `MarketDataLambdaRole` | Lambda service | CloudWatch Logs only |
-| `KnowledgeBaseRole` | Amazon Bedrock Knowledge Bases service | S3 read (documents bucket), Aurora pgvector write |
+| `KnowledgeBaseRole` | Knowledge Bases for Amazon Bedrock service | S3 read (documents bucket), Aurora pgvector write |
 | `BuildTriggerRole` / `BuildWaiterRole` | Lambda service | CodeBuild start/describe, CloudWatch Logs |
 | Deployment role | Reader's own AWS credentials | CloudFormation + the underlying CDK bootstrap |
 
@@ -388,7 +388,7 @@ that sometimes survive a failed mid-deploy:
 
 - S3 buckets matching `mna-*`.
 - ECR repositories matching `mna-*`.
-- Amazon Bedrock Knowledge Bases with `mna` in the name.
+- Knowledge Bases for Amazon Bedrock with `mna` in the name.
 - AgentCore Runtimes, Memories, and Gateways.
 - CloudFormation stacks starting with `Mna`.
 
@@ -409,7 +409,7 @@ every sweep.
 | `cdk deploy` on AgentStack hangs for >15 minutes after "Build started" | Build waiter polling timed out. | Re-run `deploy.sh`. A cold CodeBuild start plus a cold Aurora provision can push the first deploy close to the waiter cap. |
 | `cdk deploy` fails on DataStack with "Aurora cluster creation timed out" | Aurora Serverless v2 provisioning can exceed 20 minutes in heavily-used regions. | Re-run `deploy.sh` — the stack resumes from the last successful resource. |
 | `generate.py --seed-all` fails with "ingestion job failed" | A KB document could not be parsed or embedded. | `generate.py` prints the failing document IDs; remove them from the generator seed list and re-run. |
-| Agent invocation returns "no supporting documents found" | The KB ingestion job hadn't completed when the prompt ran. | Wait 2-3 minutes after `generate.py` finishes, then re-run the prompt. The ingestion job's status is in the Amazon Bedrock Knowledge Bases console. |
+| Agent invocation returns "no supporting documents found" | The KB ingestion job hadn't completed when the prompt ran. | Wait 2-3 minutes after `generate.py` finishes, then re-run the prompt. The ingestion job's status is in Knowledge Bases for Amazon Bedrock console. |
 | Notebook trace cell returns "(not yet indexed)" | X-Ray trace indexing lag (a few seconds after the invocation). | Re-run the cell. The `mna.client.get_last_trace` helper already retries with backoff. |
 | `cleanup.sh` succeeds but S3 bucket still exists | The S3 bucket had versioned objects that the default cleanup did not delete. | Run `aws s3 rb s3://<bucket-name> --force`, or empty the bucket first via the console. |
 | Windows PowerShell: "running scripts is disabled on this system" | PowerShell execution policy is Restricted. | Run `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` once, then re-run `.\deploy.ps1`. |

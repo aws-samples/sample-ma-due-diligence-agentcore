@@ -4,20 +4,20 @@
 
 This document defines the requirements for an open-source AWS sample that demonstrates a multi-agent system for M&A due diligence in the transportation and logistics industry. The sample accompanies an AWS Machine Learning blog post and must enable readers to deploy, run, and tear down a working system with minimal friction.
 
-The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents coordinated by a supervisor agent, all built with the Strands SDK. Agents ground their responses in synthetic M&A documents vian Amazon Bedrock Knowledge Bases, retain context through AgentCore Memory, and are subject to safety controls vian Amazon Bedrock Guardrails and a custom citation-validation evaluator.
+The sample uses AWS Bedrock AgentCore Runtime to host four specialist agents coordinated by a supervisor agent, all built with the Strands SDK. Agents ground their responses in synthetic M&A documents via Knowledge Bases for Amazon Bedrock, retain context through AgentCore Memory, and are subject to safety controls via AWS Bedrock Guardrails and a custom citation-validation evaluator.
 
 ### In Scope (v1)
 
-- Multi-agent orchestration using Strands SDK on Amazon Bedrock AgentCore Runtime
+- Multi-agent orchestration using Strands SDK on AWS Bedrock AgentCore Runtime
 - Four specialist agents coordinated by a supervisor: Target Screening, Financial Analysis, Strategic Fit, Compliance Validation
-- RAG over synthetic M&A documents vian Amazon Bedrock Knowledge Bases
-- Text-to-SQL over structured target-company data in Amazon Aurora PostgreSQL Serverless v2
+- RAG over synthetic M&A documents via Knowledge Bases for Amazon Bedrock
+- Text-to-SQL over structured target-company data in AWS Aurora PostgreSQL Serverless v2
 - Persistent context via AgentCore Memory
-- Session and cache storage in Amazon DynamoDB
-- Safety controls vian Amazon Bedrock Guardrails
+- Session and cache storage in AWS DynamoDB
+- Safety controls via AWS Bedrock Guardrails
 - One custom evaluator demonstrating citation validation
 - One external tool via AgentCore Gateway demonstrating the MCP pattern
-- Observability via CloudWatch and X-Ray
+- Observability via Amazon CloudWatch and AWS X-Ray
 - Notebook and CLI interfaces over a shared Python package
 - Synthetic data generator and example prompts
 - Infrastructure as Code deployment and teardown
@@ -35,33 +35,33 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 
 ### Requirement 1: Multi-Agent Orchestration
 
-**User Story:** As a reader following the walkthrough, I want to interact with a coordinated set of specialist agents, so that they can see how multi-agent collaboration handles M&A due diligence tasks.
+**User Story:** As a reader following the walkthrough, I want to interact with a coordinated set of specialist agents, enabling them to see how multi-agent collaboration handles M&A due diligence tasks.
 
 #### Acceptance Criteria
 
 1. WHEN the system is deployed THEN it SHALL provide exactly one supervisor agent that routes prompts to specialist agents.
 2. WHEN the system is deployed THEN it SHALL provide four specialist agents: Target Screening, Financial Analysis, Strategic Fit, and Compliance Validation.
 3. WHERE an agent is implemented THE system SHALL use the Strands SDK.
-4. WHERE an agent runs THE system SHALL host it on Amazon Bedrock AgentCore Runtime.
+4. WHERE an agent runs THE system SHALL host it on AWS Bedrock AgentCore Runtime.
 5. WHEN the supervisor receives a prompt THEN it SHALL invoke one or more specialists using the agents-as-tools pattern based on prompt intent.
 6. WHEN a specialist returns a response grounded in retrieved documents THEN that response SHALL include inline citations resolvable to source documents.
 
 ### Requirement 2: Knowledge Retrieval, Structured Data, and Memory
 
-**User Story:** As a reader, I want agents to ground their answers in synthetic organizational documents, query structured target data, and retain context across turns, so that they can validate the blog's claims about RAG, text-to-SQL, and knowledge retention.
+**User Story:** As a reader, I want agents to ground their answers in synthetic organizational documents, query structured target data, and retain context across turns, enabling them to validate the blog's claims about RAG, text-to-SQL, and knowledge retention.
 
 #### Acceptance Criteria
 
-1. WHEN the sample is deployed THEN the system SHALL index synthetic M&A documents in an Amazon Bedrock Knowledge Base backed by Amazon S3.
+1. WHEN the sample is deployed THEN the system SHALL index synthetic M&A documents in an Knowledge Bases for Amazon Bedrock backed by Amazon S3.
 2. WHEN an agent response is grounded in indexed documents THEN the response SHALL return citations resolvable to the source S3 objects.
 3. WHERE session context must persist across turns THE system SHALL use AgentCore Memory.
 4. WHEN the Strategic Fit agent runs THEN it SHALL have access to prior-deal memos via AgentCore Memory.
-5. WHERE structured target company data (e.g., revenue, EBITDA, fleet size, geographic coverage) is stored THE system SHALL use Amazon Aurora PostgreSQL Serverless v2.
-6. WHERE session data and cached invocation metadata are stored THE system SHALL use Amazon DynamoDB.
+5. WHERE structured target company data (e.g., revenue, EBITDA, fleet size, geographic coverage) is stored THE system SHALL use AWS Aurora PostgreSQL Serverless v2.
+6. WHERE session data and cached invocation metadata are stored THE system SHALL use AWS DynamoDB.
 
 ### Requirement 2a: Text-to-SQL
 
-**User Story:** As a reader, I want the Target Screening agent to answer natural-language questions about structured target data, so that they can see how agents translate user intent into auditable SQL queries.
+**User Story:** As a reader, I want the Target Screening agent to answer natural-language questions about structured target data, enabling them to see how agents translate user intent into auditable SQL queries.
 
 #### Acceptance Criteria
 
@@ -73,79 +73,79 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 
 ### Requirement 3: External Tool Integration
 
-**User Story:** The reader must be able to see how agents invoke external tools through AgentCore Gateway, so that they can understand the MCP-based integration pattern described in the blog.
+**User Story:** The reader must be able to see how agents invoke external tools through AgentCore Gateway, enabling them to understand the MCP-based integration pattern described in the blog.
 
 #### Acceptance Criteria
 
 1. WHEN the sample is deployed THEN it SHALL expose at least one external tool through AgentCore Gateway.
 2. WHERE the external tool is backed by an implementation THE system SHALL use an AWS Lambda function returning deterministic synthetic data.
-3. WHEN at least one specialist agent executes its normal flow THEN it SHALL invoke the external tool.
+3. WHEN at least one specialist agent runs its normal flow THEN it SHALL invoke the external tool.
 
 ### Requirement 4: Safety Controls and Evaluation
 
-**User Story:** The reader must be able to see concrete safety controls and output validation, so that they can trust the blog's governance narrative.
+**User Story:** The reader must be able to see concrete safety controls and output validation, enabling them to trust the blog's governance narrative.
 
 #### Acceptance Criteria
 
-1. WHERE the supervisor agent processes requests THE system SHALL apply an Amazon Bedrock Guardrail configured to filter harmful content and enforce financial-advice disclaimers.
+1. WHERE the supervisor agent processes requests THE system SHALL apply an AWS Bedrock Guardrail configured to filter harmful content and enforce financial-advice disclaimers.
 2. WHEN an agent returns a response THEN the system SHALL provide a custom evaluator that validates every factual claim has at least one supporting citation.
 3. WHEN a user runs the evaluator from the notebook or CLI THEN the evaluator SHALL produce a pass/fail result with per-claim detail.
 4. WHEN the evaluator produces a result THEN the result SHALL be stored alongside the agent response for auditability.
 
 ### Requirement 5: Synthetic Data
 
-**User Story:** As a reader, I want a ready-made synthetic dataset, so that they can run the example prompts end-to-end without sourcing my own M&A documents.
+**User Story:** As a reader, I want a ready-made synthetic dataset, enabling them to run the example prompts end-to-end without sourcing my own M&A documents.
 
 #### Acceptance Criteria
 
 1. WHEN the data generator runs THEN it SHALL produce at least 3 target-company Confidential Information Memoranda (CIMs), summary financials, press releases, and prior-deal memos.
 2. WHEN the data generator runs THEN it SHALL produce a seed dataset of at least 20 fictional transportation and logistics target companies with structured attributes.
 3. WHERE synthetic documents reference companies THE content SHALL be clearly labeled as synthetic and SHALL NOT reference real companies without disclaimers.
-4. WHEN the data generator runs THEN it SHALL populate Amazon S3, the Amazon Bedrock Knowledge Base, Amazon Aurora PostgreSQL, Amazon DynamoDB, and AgentCore Memory.
+4. WHEN the data generator runs THEN it SHALL populate Amazon S3, Knowledge Bases for Amazon Bedrock, AWS Aurora PostgreSQL, AWS DynamoDB, and AgentCore Memory.
 5. WHERE the data generator is invoked THE system SHALL support invocation either before or after deployment of the agent stack.
 
 ### Requirement 6: Example Prompts
 
-**User Story:** As a reader, I want ready-to-run prompts for each specialist agent, so that they can reproduce the blog's demonstrations without designing prompts myself.
+**User Story:** As a reader, I want ready-to-run prompts for each specialist agent, enabling them to reproduce the blog's demonstrations without designing prompts myself.
 
 #### Acceptance Criteria
 
 1. WHEN the sample is delivered THEN it SHALL include four ready-to-run prompts, one per specialist agent.
-2. WHEN an example prompt is executed against the synthetic dataset THEN it SHALL produce a meaningful, citation-backed response.
+2. WHEN an example prompt is run against the synthetic dataset THEN it SHALL produce a meaningful, citation-backed response.
 3. WHERE example prompts are documented THE sample SHALL provide them in a standalone `prompts.md` file and embed them in the walkthrough notebook.
 
 ### Requirement 7: User Interfaces
 
-**User Story:** As a reader, I want a notebook that mirrors the blog narrative and a CLI for scripting, so that they can both learn the system and integrate it into my own tooling.
+**User Story:** As a reader, I want a notebook that mirrors the blog narrative and a CLI for scripting, enabling them to both learn the system and integrate it into my own tooling.
 
 #### Acceptance Criteria
 
 1. WHEN the sample is delivered THEN it SHALL include a primary Jupyter notebook at `notebooks/walkthrough.ipynb`.
-2. WHEN the notebook is executed top-to-bottom THEN it SHALL include cells for: environment validation, data overview, one scenario per specialist agent, and an optional trace-inspection cell.
+2. WHEN the notebook is run top-to-bottom THEN it SHALL include cells for: environment validation, data overview, one scenario per specialist agent, and an optional trace-inspection cell.
 3. WHEN the sample is delivered THEN it SHALL include a CLI entry point supporting the following commands: invoke a named agent with a prompt, list available agents, and print the trace for the most recent invocation.
 4. WHERE both the notebook and the CLI invoke agents THE system SHALL route invocations through a shared Python package (`mna/`) without duplicating logic.
 
 ### Requirement 8: Deployment and Cleanup
 
-**User Story:** As a reader, I want one-command deploy and cleanup, so that they can try the sample without risking orphaned resources or unexpected charges.
+**User Story:** As a reader, I want one-command deploy and cleanup, enabling them to try the sample without risking orphaned resources or unexpected charges.
 
 #### Acceptance Criteria
 
 1. WHEN a reader runs the deploy script THEN the system is designed to deploy end-to-end with a single command (`deploy.sh` on macOS/Linux, `deploy.ps1` on Windows).
 2. WHEN deployment runs for the first time in a bootstrapped account THEN it SHALL complete in under 25 minutes (accounting for Aurora Serverless v2 provisioning).
 3. WHEN a reader runs the cleanup script THEN the system SHALL tear down end-to-end with a single command (`cleanup.sh` / `cleanup.ps1`).
-4. WHEN cleanup completes THEN the cleanup process aims to remove all billable resources created by the sample SHALL be removed, including S3 buckets, Knowledge Base, DynamoDB tables, Lambda functions, AgentCore Runtime, AgentCore Memory, and Guardrail.
+4. WHEN cleanup completes THEN the cleanup process is designed to remove billable resources created by this sample. WARNING: Cleanup permanently deletes all data in S3, DynamoDB, Aurora, and AgentCore Memory. This action covers billable resources created by the sample SHALL be removed, including S3 buckets, Knowledge Base, DynamoDB tables, Lambda functions, AgentCore Runtime, AgentCore Memory, and Guardrail.
 5. WHERE cleanup verification is needed THE README SHALL document specific commands the reader can run to confirm teardown completed.
 
 ### Requirement 9: Observability
 
-**User Story:** The reader must be able to inspect how requests flow through the agents, so that they can understand and debug the system's behavior.
+**User Story:** The reader must be able to inspect how requests flow through the agents, enabling them to understand and debug the system's behavior.
 
 #### Acceptance Criteria
 
 1. WHEN any agent is invoked THEN the system SHALL produce structured logs in Amazon CloudWatch.
 2. WHEN any agent is invoked THEN the system SHALL produce an AWS X-Ray trace covering supervisor, specialist, and tool/Knowledge Base calls.
-3. WHEN the notebook's trace-inspection cell is executed THEN it SHALL retrieve and display the trace for the most recent invocation.
+3. WHEN the notebook's trace-inspection cell is run THEN it SHALL retrieve and display the trace for the most recent invocation.
 
 ### Requirement 10: Operating System and Regional Availability
 
@@ -153,7 +153,7 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 
 #### Acceptance Criteria
 
-1. WHERE the sample is deployed THE target AWS region SHALL be one where Amazon Bedrock AgentCore is generally available.
+1. WHERE the sample is deployed THE target AWS region SHALL be one where AWS Bedrock AgentCore is generally available.
 2. WHEN deployment is attempted in an unsupported region THEN the system SHALL fail fast with a clear error message and link to the AgentCore regions documentation.
 3. WHEN the README is delivered THEN it SHALL document all supported regions.
 
@@ -189,7 +189,7 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 
 ### Requirement 12: Foundation Model Configuration
 
-**User Story:** The reader must be able to swap foundation models easily, so that they can experiment with performance, cost, and capability trade-offs.
+**User Story:** The reader must be able to swap foundation models easily, enabling them to experiment with performance, cost, and capability trade-offs.
 
 #### Acceptance Criteria
 
@@ -199,7 +199,7 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 
 ### Requirement 13: Cost
 
-**User Story:** As a reader, I want predictable, low cost to try the sample, so that they can evaluate the solution without budget concerns.
+**User Story:** As a reader, I want predictable, low cost to try the sample, enabling them to evaluate the solution without budget concerns.
 
 #### Acceptance Criteria
 
@@ -209,7 +209,7 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 
 ### Requirement 14: Security
 
-**User Story:** As a security-conscious reader, I want the sample to follow least-privilege defaults, so that they can adopt it without introducing security issues.
+**User Story:** As a security-conscious reader, I want the sample to follow least-privilege defaults, enabling them to adopt it without introducing security issues.
 
 #### Acceptance Criteria
 
@@ -234,7 +234,7 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 
 ### Requirement 16: Documentation
 
-**User Story:** As a reader, I want complete documentation, so that they can deploy, understand, extend, and troubleshoot the sample without external help.
+**User Story:** As a reader, I want complete documentation, enabling them to deploy, understand, extend, and troubleshoot the sample without external help.
 
 #### Acceptance Criteria
 
@@ -267,9 +267,9 @@ The sample is considered complete when all of the following are true:
 
 ## Dependencies and Assumptions
 
-1. Readers have an AWS account with Amazon Bedrock model access enabled for Anthropic Claude and Amazon Nova model families.
+1. Readers have an AWS account with AWS Bedrock model access enabled for Anthropic Claude and Amazon Nova model families.
 2. Readers have AWS CLI v2 configured with credentials that grant CloudFormation, Lambda, S3, DynamoDB, IAM, Bedrock, and AgentCore permissions.
-3. Amazon Bedrock AgentCore remains generally available in at least one commercial AWS region at the time of publication.
+3. AWS Bedrock AgentCore remains generally available in at least one commercial AWS region at the time of publication.
 4. The Strands SDK remains the recommended orchestration framework for AgentCore at the time of publication.
 
 ## Conclusion

@@ -8,7 +8,7 @@ handlers never hardcode an ARN.
 Parameter names:
 
 * ``/mna/runtime/arn``         -- AgentCore Runtime ARN
-* ``/mna/kb/id``               -- Amazon Bedrock Knowledge Base ID
+* ``/mna/kb/id``               -- Knowledge Bases for Amazon Bedrock ID
 * ``/mna/docs/bucket``         -- Documents S3 bucket name
 * ``/mna/aurora/cluster_arn``  -- Aurora cluster ARN
 * ``/mna/aurora/secret_arn``   -- Aurora admin-credentials secret ARN

@@ -85,7 +85,7 @@ Cross-cutting (one tool routed via AgentCore Gateway):
 | Evaluation: Custom Evaluator | One Lambda checking citation presence | Implemented |
 | Evaluation: Continuous Monitoring | Not deployed | Extension |
 | Security: IAM, S3 block public, AWS-managed KMS | Implemented | Implemented |
-| Security: CMKs, PrivateLink, Config, CloudTrail setup | Not deployed (CloudTrail assumed at account level) | Extension |
+| Security: customer managed keys, PrivateLink, Config, CloudTrail setup | Not deployed (CloudTrail assumed at account level) | Extension |
 
 ### Request Flow for a Typical Prompt
 
@@ -381,7 +381,7 @@ s3://mna-docs-<account>-<region>/
 
 All files flagged as synthetic in frontmatter.
 
-### Amazon Bedrock Knowledge Base
+### Knowledge Bases for Amazon Bedrock
 
 - Data source: the S3 bucket above.
 - Chunking: default hierarchical chunking (works well for long documents).
@@ -408,7 +408,7 @@ CDK v2 Python stacks, deployed in dependency order:
 - Aurora credentials in Secrets Manager.
 - DynamoDB `mna-sessions` table.
 - S3 bucket for documents (block public, SSE-S3, versioned).
-- Amazon Bedrock Knowledge Base pointing at the S3 bucket and Aurora pgvector.
+- Knowledge Bases for Amazon Bedrock pointing at the S3 bucket and Aurora pgvector.
 - SSM parameters for ARNs: `/mna/aurora/cluster_arn`, `/mna/kb/id`, `/mna/docs/bucket`.
 
 ### 3. `EvaluatorStack`
@@ -527,7 +527,7 @@ def handler(event: dict, context: Any) -> None:
         _send_response(event, context, status, physical_id, response_data, reason)
 ```
 
-**2. Guaranteed response to CloudFormation.** A `try / except / finally` block must wrap the entire handler body. The `finally` clause sends a response using raw `urllib.request` so a Lambda import error or runtime exception still produces a response. The helper:
+**2. Designed to provide reliable response to CloudFormation.** A `try / except / finally` block must wrap the entire handler body. The `finally` clause sends a response using raw `urllib.request` so a Lambda import error or runtime exception still produces a response. The helper:
 
 ```python
 def _send_response(event, context, status, physical_id, data, reason):

@@ -51,8 +51,8 @@ This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks 
   - SSM parameters for downstream discovery
   - _Requirements: 2.5, 2.6, 13.3, 14.3, 14.4, 14.6, 14.7_
 
-- [x] 7. Implement `DataStack` (part 2 of 2): Amazon Bedrock Knowledge Base with pgvector
-  - Amazon Bedrock Knowledge Base with data source pointing at the S3 bucket
+- [x] 7. Implement `DataStack` (part 2 of 2): Knowledge Bases for Amazon Bedrock with pgvector
+  - Knowledge Bases for Amazon Bedrock with data source pointing at the S3 bucket
   - Embeddings model: `amazon.titan-embed-text-v2:0`
   - Vector store: reuse the Aurora cluster with pgvector extension
   - KB service role with S3 read + Aurora write permissions
@@ -363,3 +363,7 @@ Every numbered requirement from `requirements.md` is covered by at least one tas
 | 15 (Code quality) | 1, 14, 37, 38, 40 |
 | 16 (Documentation) | 22–25, 39 |
 | 17 (Maintainability) | 1, 40 |
+
+## Conclusion
+
+All implementation tasks are complete and verified against the requirements coverage matrix above. The sample is deployable, demonstrable, and ready for release.

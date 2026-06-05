@@ -203,7 +203,7 @@ fi
 # a Gateway hop (Requirement 15.3, Sample-level AC 2-4).
 if [ "$SKIP_SMOKE" -eq 0 ]; then
   log "Step 6/7: Running post-deploy smoke test"
-  # Don't abort the script on a smoke-test failure — the stack is
+  # Don't stop the script on a smoke-test failure — the stack is
   # deployed, the reader may want to inspect it manually. Print a
   # clear warning instead and continue to the next-steps message.
   if python -m pytest "$REPO_ROOT/tests/smoke_test.py" -m smoke --no-header -ra; then

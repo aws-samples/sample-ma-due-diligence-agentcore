@@ -1,15 +1,15 @@
-"""DataStack - Amazon Aurora Serverless v2, Amazon DynamoDB, Amazon S3, and the Amazon Bedrock Knowledge Base.
+"""DataStack - AWS Aurora Serverless v2, AWS DynamoDB, Amazon S3, and Knowledge Bases for Amazon Bedrock.
 
 This stack owns the persistent data plane for the sample:
 
-- An Amazon Aurora PostgreSQL Serverless v2 cluster hosting the ``mna`` schema
+- An AWS Aurora PostgreSQL Serverless v2 cluster hosting the ``mna`` schema
   (target companies) and the ``mna.kb_chunks`` table that backs the
-  Amazon Bedrock Knowledge Base's ``pgvector`` vector store.
-- An Amazon DynamoDB ``mna-sessions`` table for turn-level session caching with
+  Knowledge Bases for Amazon Bedrock's ``pgvector`` vector store.
+- An AWS DynamoDB ``mna-sessions`` table for turn-level session caching with
   TTL-bounded storage cost.
 - An Amazon S3 bucket that stores the synthetic CIMs, financials, press packs,
   memos, and governance documents.
-- An Amazon Bedrock Knowledge Base that embeds the S3 documents with
+- An Knowledge Bases for Amazon Bedrock that embeds the S3 documents with
   ``amazon.titan-embed-text-v2:0`` and persists the vectors into Aurora
   via the ``pgvector`` extension.
 - SSM parameters that publish each resource's identifier under the
@@ -197,7 +197,7 @@ _AURORA_BOOTSTRAP_LAMBDA_TIMEOUT_MINUTES = 5
 
 
 class DataStack(Stack):
-    """Aurora, DynamoDB, S3, and Amazon Bedrock Knowledge Base for the sample.
+    """Aurora, DynamoDB, S3, and Knowledge Bases for Amazon Bedrock for the sample.
 
     Public attributes consumed by downstream stacks (primarily
     :class:`infra.stacks.agent_stack.AgentStack`):
@@ -295,7 +295,7 @@ class DataStack(Stack):
             # used by the agents (see design "Components → tools →
             # text_to_sql") and by the Aurora bootstrap CR in task 12.
             enable_data_api=True,
-            # Storage encryption with AWS-managed key (Req 14.4). CMK
+            # Storage encryption with AWS-managed key (Req 14.4). customer managed key
             # rotation is called out as an extension in the README.
             storage_encrypted=True,
             # Keep the cost window narrow: 1-day automated backups are
@@ -401,7 +401,7 @@ class DataStack(Stack):
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             time_to_live_attribute="expires_at",
             # AWS-owned KMS key = SSE at rest with no additional cost
-            # (Req 14.4). CMK rotation called out as an extension.
+            # (Req 14.4). customer managed key rotation called out as an extension.
             encryption=dynamodb.TableEncryption.AWS_MANAGED,
             # Sample is ephemeral; teardown must remove the table
             # cleanly (Req 8.4). Point-in-time recovery is left at
@@ -420,7 +420,7 @@ class DataStack(Stack):
         #
         # ``BLOCK_ALL`` explicitly turns on every block-public-access
         # control (Req 14.3). SSE-S3 encryption satisfies Req 14.4
-        # without the operational overhead of a CMK. Versioning
+        # without the operational overhead of a customer managed key. Versioning
         # protects against accidental overwrites during reader
         # experimentation and makes KB re-ingestion deterministic.
         self.documents_bucket = s3.Bucket(
@@ -562,7 +562,7 @@ class DataStack(Stack):
         self.aurora_bootstrap.node.add_dependency(self.aurora_cluster)
 
         # ------------------------------------------------------------------
-        # Amazon Bedrock Knowledge Base service role (Req 2.1, 2.2, 14.1)
+        # Knowledge Bases for Amazon Bedrock service role (Req 2.1, 2.2, 14.1)
         # ------------------------------------------------------------------
         # Bedrock assumes this role when it:
         #   1. Lists / reads objects from the documents bucket during
@@ -591,7 +591,7 @@ class DataStack(Stack):
                 },
             ),
             description=(
-                "Role assumed by the Amazon Bedrock Knowledge Base to read the "
+                "Role assumed by Knowledge Bases for Amazon Bedrock to read the "
                 "documents S3 bucket, call the Titan embeddings model, "
                 "and write vectors into Aurora pgvector via RDS Data API."
             ),
@@ -680,7 +680,7 @@ class DataStack(Stack):
         )
 
         # ------------------------------------------------------------------
-        # Amazon Bedrock Knowledge Base (Req 2.1, 2.2)
+        # Knowledge Bases for Amazon Bedrock (Req 2.1, 2.2)
         # ------------------------------------------------------------------
         # L1 constructs are used deliberately: the L2 ``bedrock``
         # constructs in ``aws-cdk-lib`` 2.173 are still marked

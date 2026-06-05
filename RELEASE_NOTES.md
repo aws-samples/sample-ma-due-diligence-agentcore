@@ -23,7 +23,7 @@ AgentCore"_ (link will be added once the post is published).
 
 **Grounding and memory**
 
-- Amazon Bedrock Knowledge Base over a synthetic S3-backed document
+- Knowledge Bases for Amazon Bedrock over a synthetic S3-backed document
   corpus (CIMs, financial summaries, press packs, governance
   checklist), indexed into Aurora pgvector.
 - Text-to-SQL tool that translates natural language into read-only
