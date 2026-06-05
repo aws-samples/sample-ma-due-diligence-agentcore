@@ -267,7 +267,7 @@ class TestCheckCitationsFail:
         assert len(result.unsupported_claims) == 3
 
     def test_irrelevant_citation_does_not_support_claim(self) -> None:
-        response = "Bluewave Freight grew ocean-container volume 18 percent in 2023."
+        response = "AnyCompany Freight grew ocean-container volume 18 percent in 2023."
         citations = [
             Citation(
                 text=(

@@ -51,7 +51,7 @@ def _execute_statement_response() -> dict:
             ],
             [
                 {"stringValue": "co-002"},
-                {"stringValue": "Bluewave Freight"},
+                {"stringValue": "AnyCompany Freight"},
                 {"doubleValue": 180_000_000.0},
                 {"arrayValue": {"stringValues": ["ocean"]}},
             ],

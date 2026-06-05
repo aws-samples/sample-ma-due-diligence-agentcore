@@ -130,7 +130,7 @@ walks through the architecture, the agent orchestration pattern,
 and the reader journey:
 
 - **Blog post:** _"Build a multi-agent M&A due-diligence assistant
-  on Amazon Amazon Bedrock AgentCore"_ — link will be added here once the
+  on Amazon Bedrock AgentCore"_ — link will be added here once the
   post is published.
 
 The README's "Documentation and references" section is the

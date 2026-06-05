@@ -354,7 +354,7 @@ Every numbered requirement from `requirements.md` is covered by at least one tas
 | 7 (User interfaces) | 2, 3, 33, 34 |
 | 8 (Deploy + cleanup) | 35, 36 |
 | 9 (Observability) | 3, 13, 34 |
-| 10 (Platform / regions) | 4, 39 |
+| 10 (Deployment / regions) | 4, 39 |
 | 11 (Runtime + dependencies) | 1, 4, 11, 35, 36 |
 | 11a (CR safety) | 10, 11, 12, 13, 16, 17, 40 |
 | 12 (Foundation model config) | 26 |

@@ -36,12 +36,12 @@ signs off the in-scope requirements for the `v1.0.0` release.
 
 | AC | Task(s) | Primary files |
 |---|---|---|
-| 2.1 KB over synthetic docs backed by S3 | 7, 18 | `infra/stacks/data_stack.py`, `src/mna/tools/kb_retrieve.py` |
+| 2.1 KB over synthetic docs backed by Amazon S3 | 7, 18 | `infra/stacks/data_stack.py`, `src/mna/tools/kb_retrieve.py` |
 | 2.2 Responses return citations resolvable to S3 objects | 18 | `src/mna/tools/kb_retrieve.py`, `tests/unit/test_kb_retrieve.py` |
 | 2.3 Session context via AgentCore Memory | 13, 21 | `lambda/agentcore_memory/handler.py`, `src/mna/tools/memory.py` |
 | 2.4 Strategic Fit reads prior-deal memos | 24, 30 | `src/mna/agents/strategic_fit.py`, `data/generate.py memory` subcommand |
-| 2.5 Structured data in Aurora Serverless v2 | 6, 12, 27 | `infra/stacks/data_stack.py`, `data/schemas/target_companies.sql`, `lambda/aurora_bootstrap/handler.py` |
-| 2.6 Session data in DynamoDB | 6 | `infra/stacks/data_stack.py` (`mna-sessions` table) |
+| 2.5 Structured data in Amazon Aurora Serverless v2 | 6, 12, 27 | `infra/stacks/data_stack.py`, `data/schemas/target_companies.sql`, `lambda/aurora_bootstrap/handler.py` |
+| 2.6 Session data in Amazon DynamoDB | 6 | `infra/stacks/data_stack.py` (`mna-sessions` table) |
 
 ### Requirement 2a — Text-to-SQL
 
@@ -65,7 +65,7 @@ signs off the in-scope requirements for the `v1.0.0` release.
 
 | AC | Task(s) | Primary files |
 |---|---|---|
-| 4.1 Supervisor uses a Amazon Bedrock Guardrail | 13, 26 | `infra/stacks/agent_stack.py` (Guardrail native resource), `src/mna/agents/supervisor.py` (`MNA_GUARDRAIL_ID`) |
+| 4.1 Supervisor uses Amazon Bedrock Guardrails | 13, 26 | `infra/stacks/agent_stack.py` (Guardrail native resource), `src/mna/agents/supervisor.py` (`MNA_GUARDRAIL_ID`) |
 | 4.2 Custom evaluator validates every factual claim has a citation | 8, 14, 25 | `lambda/citation_check/handler.py`, `src/mna/evaluators/citation_check.py` (local mirror), `src/mna/agents/compliance_validation.py` |
 | 4.3 Evaluator produces pass/fail with per-claim detail from notebook/CLI | 14, 33, 34 | `src/mna/types.py` (`EvaluationResult`), `cli/invoke.py evaluate`, `notebooks/walkthrough.ipynb` Cell 6 |
 | 4.4 Result stored alongside the agent response | 8, 33 | `infra/stacks/data_stack.py` (DynamoDB `evaluation` attribute), `src/mna/client.py` + `cli/invoke.py` persist evaluation payloads |
@@ -102,7 +102,7 @@ signs off the in-scope requirements for the `v1.0.0` release.
 | AC | Task(s) | Primary files |
 |---|---|---|
 | 8.1 One-command deploy (bash + PowerShell) | 35 | `deploy.sh`, `deploy.ps1` |
-| 8.2 First-time deploy under 25 minutes | 35 | Cost/time budget documented in `README.md`, Aurora min-ACU + CodeBuild flow keep the critical path bounded |
+| 8.2 First-time deploy under 25 minutes | 35 | Cost/time budget documented in `README.md`, Aurora min-ACU + AWS CodeBuild flow keep the critical path bounded |
 | 8.3 One-command cleanup (bash + PowerShell) | 36 | `cleanup.sh`, `cleanup.ps1` |
 | 8.4 Cleanup removes all billable resources | 36 | `cleanup.*` runs `cdk destroy --all --force`; `scripts/verify_cleanup.*` scans for orphans |
 | 8.5 README documents verification commands | 36, 39 | `README.md` Cleanup section; `scripts/verify_cleanup.sh` / `.ps1` print copy-paste commands |
@@ -111,8 +111,8 @@ signs off the in-scope requirements for the `v1.0.0` release.
 
 | AC | Task(s) | Primary files |
 |---|---|---|
-| 9.1 Structured CloudWatch logs | 2 (logging_config), 13 | `src/mna/logging_config.py` (JsonFormatter), every tool/agent/Lambda uses `get_logger` |
-| 9.2 X-Ray trace across supervisor → specialist → tool | 13 | AgentCore Runtime tracing enabled in `infra/stacks/agent_stack.py`; segments asserted in `tests/smoke_test.py::test_at_least_one_invocation_hits_the_gateway` |
+| 9.1 Structured Amazon CloudWatch logs | 2 (logging_config), 13 | `src/mna/logging_config.py` (JsonFormatter), every tool/agent/Lambda uses `get_logger` |
+| 9.2 AWS X-Ray trace across supervisor → specialist → tool | 13 | AgentCore Runtime tracing enabled in `infra/stacks/agent_stack.py`; segments asserted in `tests/smoke_test.py::test_at_least_one_invocation_hits_the_gateway` |
 | 9.3 Notebook trace cell retrieves trace for last invocation | 3, 34 | `src/mna/client.py::get_last_trace`, `notebooks/walkthrough.ipynb` Cell 7 |
 
 ### Requirement 10 — Platform and regional availability

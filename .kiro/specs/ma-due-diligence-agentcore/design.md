@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the technical design for the M&A Due Diligence Multi-Agent sample, implementing the requirements defined in `requirements.md`. The sample is a self-contained, deployable AWS solution that demonstrates a supervisor-plus-specialists agent pattern on Amazon Amazon Bedrock AgentCore, grounded in synthetic transportation and logistics M&A data.
+This document describes the technical design for the M&A Due Diligence Multi-Agent sample, implementing the requirements defined in `requirements.md`. The sample is a self-contained, deployable AWS solution that demonstrates a supervisor-plus-specialists agent pattern on Amazon Bedrock AgentCore, grounded in synthetic transportation and logistics M&A data.
 
 The design prioritizes three qualities in this order:
 
@@ -31,7 +31,7 @@ The design assumes Python 3.11+, AWS CDK v2 (Python), and deployment to a single
                              │ boto3 InvokeAgentRuntime
                              ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    Amazon Amazon Bedrock AgentCore Runtime                     │
+│                    Amazon Bedrock AgentCore Runtime                     │
 │   ┌───────────────────────────────────────────────────────────────┐     │
 │   │                    Supervisor Agent (Strands)                 │     │
 │   │   Guardrails │ Memory (session) │ Trace (X-Ray) │ CloudWatch  │     │
@@ -470,7 +470,7 @@ You never run `docker build`. Your local machine only needs AWS CLI, Node.js, an
 
 ### Custom Resources Inventory
 
-CloudFormation Custom Resources (CRs) are used wherever CloudFormation does not yet ship a native resource type for an operation we need, or where an asynchronous/imperative action must complete during stack creation. This design requires 6–8 CRs depending on CloudFormation and CDK support for Amazon Amazon Bedrock AgentCore at implementation time.
+CloudFormation Custom Resources (CRs) are used wherever CloudFormation does not yet ship a native resource type for an operation we need, or where an asynchronous/imperative action must complete during stack creation. This design requires 6–8 CRs depending on CloudFormation and CDK support for Amazon Bedrock AgentCore at implementation time.
 
 | # | Custom Resource | Stack | Wraps | Always required? |
 |---|---|---|---|---|

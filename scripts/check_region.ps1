@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Verify the target AWS region supports Amazon Amazon Bedrock AgentCore.
+    Verify the target AWS region supports Amazon Bedrock AgentCore.
 
 .DESCRIPTION
     Windows-native sibling of scripts/check_region.sh. Feature parity is a

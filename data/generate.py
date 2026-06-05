@@ -73,7 +73,7 @@ DEFAULT_SEED = 42
 COMPANY_NAMES: tuple[str, ...] = (
     "Example Corp",
     "Anchor Freightlines",
-    "Bluewave Freight",
+    "AnyCompany Freight",
     "Cascade Transport",
     "Continental Drayage",
     "Example Haulage",
@@ -130,7 +130,7 @@ SERVICE_LINES: tuple[str, ...] = (
 #: paths match the design.
 SPOTLIGHT_COMPANY_NAMES: tuple[str, ...] = (
     "Example Corp",
-    "Bluewave Freight",
+    "AnyCompany Freight",
     "Cascade Transport",
 )
 
@@ -145,7 +145,7 @@ class PriorDealSeed:
     """Structured input for a prior-deal memo.
 
     Keeps the human-written thesis separate from the ~500-word
-    narrative body so we can template the body via Amazon Bedrock when it is
+    narrative body so we can template the body vian Amazon Bedrock when it is
     available and fall back to a static template otherwise.
     """
 

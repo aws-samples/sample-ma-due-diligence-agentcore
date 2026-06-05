@@ -23,12 +23,12 @@ Build Pipeline*, *Custom Resources Inventory*, and *Security Design
 
 Requirements implemented by this stack:
 
-* **1.4** The agent runtime is hosted on Amazon Amazon Bedrock AgentCore
+* **1.4** The agent runtime is hosted on Amazon Bedrock AgentCore
   Runtime (native or CR-managed).
 * **2.3** / **2.4** AgentCore Memory is provisioned and its
   ``prior_deals`` namespace is seeded so the Strategic Fit agent has
   access to prior-deal memos.
-* **4.1** A Amazon Bedrock Guardrail is attached to the runtime (via the
+* **4.1** An Amazon Bedrock Guardrail is attached to the runtime (via the
   ``MNA_GUARDRAIL_ID`` environment variable) and configured with
   harmful-content filters and a ``financial_advice`` denial topic.
 * **11a.1–11a.9** Every Custom Resource this stack creates follows

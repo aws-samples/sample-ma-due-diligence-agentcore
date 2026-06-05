@@ -4,17 +4,17 @@
 
 This document defines the requirements for an open-source AWS sample that demonstrates a multi-agent system for M&A due diligence in the transportation and logistics industry. The sample accompanies an AWS Machine Learning blog post and must enable readers to deploy, run, and tear down a working system with minimal friction.
 
-The sample uses Amazon Amazon Bedrock AgentCore Runtime to host four specialist agents coordinated by a supervisor agent, all built with the Strands SDK. Agents ground their responses in synthetic M&A documents via Amazon Amazon Bedrock Knowledge Bases, retain context through AgentCore Memory, and are subject to safety controls via Amazon Amazon Bedrock Guardrails and a custom citation-validation evaluator.
+The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents coordinated by a supervisor agent, all built with the Strands SDK. Agents ground their responses in synthetic M&A documents vian Amazon Bedrock Knowledge Bases, retain context through AgentCore Memory, and are subject to safety controls vian Amazon Bedrock Guardrails and a custom citation-validation evaluator.
 
 ### In Scope (v1)
 
-- Multi-agent orchestration using Strands SDK on Amazon Amazon Bedrock AgentCore Runtime
+- Multi-agent orchestration using Strands SDK on Amazon Bedrock AgentCore Runtime
 - Four specialist agents coordinated by a supervisor: Target Screening, Financial Analysis, Strategic Fit, Compliance Validation
-- RAG over synthetic M&A documents via Amazon Amazon Bedrock Knowledge Bases
+- RAG over synthetic M&A documents vian Amazon Bedrock Knowledge Bases
 - Text-to-SQL over structured target-company data in Amazon Aurora PostgreSQL Serverless v2
 - Persistent context via AgentCore Memory
 - Session and cache storage in Amazon DynamoDB
-- Safety controls via Amazon Amazon Bedrock Guardrails
+- Safety controls vian Amazon Bedrock Guardrails
 - One custom evaluator demonstrating citation validation
 - One external tool via AgentCore Gateway demonstrating the MCP pattern
 - Observability via CloudWatch and X-Ray
@@ -42,7 +42,7 @@ The sample uses Amazon Amazon Bedrock AgentCore Runtime to host four specialist 
 1. WHEN the system is deployed THEN it SHALL provide exactly one supervisor agent that routes prompts to specialist agents.
 2. WHEN the system is deployed THEN it SHALL provide four specialist agents: Target Screening, Financial Analysis, Strategic Fit, and Compliance Validation.
 3. WHERE an agent is implemented THE system SHALL use the Strands SDK.
-4. WHERE an agent runs THE system SHALL host it on Amazon Amazon Bedrock AgentCore Runtime.
+4. WHERE an agent runs THE system SHALL host it on Amazon Bedrock AgentCore Runtime.
 5. WHEN the supervisor receives a prompt THEN it SHALL invoke one or more specialists using the agents-as-tools pattern based on prompt intent.
 6. WHEN a specialist returns a response grounded in retrieved documents THEN that response SHALL include inline citations resolvable to source documents.
 
@@ -153,7 +153,7 @@ The sample uses Amazon Amazon Bedrock AgentCore Runtime to host four specialist 
 
 #### Acceptance Criteria
 
-1. WHERE the sample is deployed THE target AWS region SHALL be one where Amazon Amazon Bedrock AgentCore is generally available.
+1. WHERE the sample is deployed THE target AWS region SHALL be one where Amazon Bedrock AgentCore is generally available.
 2. WHEN deployment is attempted in an unsupported region THEN the system SHALL fail fast with a clear error message and link to the AgentCore regions documentation.
 3. WHEN the README is delivered THEN it SHALL document all supported regions.
 
@@ -269,9 +269,9 @@ The sample is considered complete when all of the following are true:
 
 1. Readers have an AWS account with Amazon Bedrock model access enabled for Anthropic Claude and Amazon Nova model families.
 2. Readers have AWS CLI v2 configured with credentials that grant CloudFormation, Lambda, S3, DynamoDB, IAM, Bedrock, and AgentCore permissions.
-3. Amazon Amazon Bedrock AgentCore remains generally available in at least one commercial AWS region at the time of publication.
+3. Amazon Bedrock AgentCore remains generally available in at least one commercial AWS region at the time of publication.
 4. The Strands SDK remains the recommended orchestration framework for AgentCore at the time of publication.
 
 ## Conclusion
 
-These requirements define the scope, acceptance criteria, and constraints for the M&A Due Diligence Multi-Agent sample. Together they ensure the sample is deployable, demonstrable, safe, and cost-controlled. The design document translates these requirements into a concrete architecture, and the implementation plan maps each requirement to an executable task.
+These requirements define the scope, acceptance criteria, and constraints for the M&A Due Diligence Multi-Agent sample. Together they are designed to make the sample deployable, demonstrable, safe, and cost-controlled. The design document translates these requirements into a concrete architecture, and the implementation plan maps each requirement to an executable task.

@@ -4,7 +4,7 @@
 #
 # Purpose
 #   Verify that the AWS region the reader is about to deploy into is one
-#   where Amazon Amazon Bedrock AgentCore is generally available.
+#   where Amazon Bedrock AgentCore is generally available.
 #
 # What "failure" means
 #   The script exits with status 1 and prints a pointer to the AgentCore

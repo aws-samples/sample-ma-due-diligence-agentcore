@@ -18,7 +18,7 @@
          reader's global Python clean (design §"Virtual environment").
       3. `cdk bootstrap` — idempotent. Skipped on accounts where the
          bootstrap stack is already present.
-      4. `cdk deploy --all` — CDK resolves the Network → Data →
+      4. `cdk deploy --all` — AWS CDK resolves the Network → Data →
          Evaluator → Gateway → Agent dependency order from the stack
          graph declared in infra/app.py (Requirement 8.1, 8.2).
       5. Seed synthetic data via `python data/generate.py --seed-all`.

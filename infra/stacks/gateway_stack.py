@@ -1,7 +1,7 @@
 """GatewayStack - AgentCore Gateway + market-data AWS Lambda function.
 
 This stack owns the single external tool the sample exposes via
-Amazon Amazon Bedrock AgentCore Gateway, wired to an AWS Lambda function that returns
+Amazon Bedrock AgentCore Gateway, wired to an AWS Lambda function that returns
 deterministic synthetic comparable-company multiples. The Financial
 Analysis agent (task 23) consumes the tool through the
 :mod:`mna.tools.market_data` wrapper (task 20) which in turn

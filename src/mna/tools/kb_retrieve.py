@@ -5,7 +5,7 @@ Wraps ``bedrock-agent-runtime:Retrieve`` and returns a list of
 the notebook all speak the same shape (see design.md → "Components and
 Interfaces" → "Tools" → ``tools/kb_retrieve.py``).
 
-The ``bedrock-agent-runtime`` boto3 client is imported lazily to keep
+The Amazon Bedrock Agent Runtime (``bedrock-agent-runtime``) boto3 client is imported lazily to keep
 ``import mna`` cold-start safe (same convention used by
 :mod:`mna.client` and :mod:`mna.config`).
 """
@@ -84,7 +84,7 @@ def _coerce_float(value: Any) -> float | None:
 def _extract_source(location: dict[str, Any]) -> str:
     """Pull the source URI out of a Retrieve ``location`` payload.
 
-    The Bedrock API documents several location types (``S3``,
+    The Amazon Bedrock API documents several location types (``S3``,
     ``WEB``, ``CONFLUENCE``, ``SALESFORCE``, ``SHAREPOINT``, ``CUSTOM``,
     ``KENDRA``, ``SQL``). We check each known shape and fall back to the
     top-level ``type`` string if no URI is present so the caller still
@@ -127,7 +127,7 @@ def _extract_source(location: dict[str, Any]) -> str:
 def _extract_page(metadata: dict[str, Any] | None) -> int | None:
     """Pull a page number out of the ``metadata``/``documentAttributes`` payload.
 
-    Bedrock surfaces page numbers either at the top level of metadata
+    Amazon Bedrock surfaces page numbers either at the top level of metadata
     (``{"page": 3}``) or inside a ``documentAttributes`` list
     (``[{"key": "page", "value": {"numberValue": 3}}]``). We accept both.
     """
