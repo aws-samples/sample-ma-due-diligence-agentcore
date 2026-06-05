@@ -1,15 +1,15 @@
-"""DataStack - AWS Aurora Serverless v2, AWS DynamoDB, Amazon S3, and Knowledge Bases for Amazon Bedrock.
+"""DataStack - Amazon Aurora Serverless v2, Amazon DynamoDB, Amazon S3, and Amazon Bedrock Knowledge Bases.
 
 This stack owns the persistent data plane for the sample:
 
-- An AWS Aurora PostgreSQL Serverless v2 cluster hosting the ``mna`` schema
+- An Amazon Aurora PostgreSQL Serverless v2 cluster hosting the ``mna`` schema
   (target companies) and the ``mna.kb_chunks`` table that backs the
-  Knowledge Bases for Amazon Bedrock's ``pgvector`` vector store.
-- An AWS DynamoDB ``mna-sessions`` table for turn-level session caching with
+  Amazon Bedrock Knowledge Bases's ``pgvector`` vector store.
+- An Amazon DynamoDB ``mna-sessions`` table for turn-level session caching with
   TTL-bounded storage cost.
 - An Amazon S3 bucket that stores the synthetic CIMs, financials, press packs,
   memos, and governance documents.
-- An Knowledge Bases for Amazon Bedrock that embeds the S3 documents with
+- An Amazon Bedrock Knowledge Bases that embeds the S3 documents with
   ``amazon.titan-embed-text-v2:0`` and persists the vectors into Aurora
   via the ``pgvector`` extension.
 - SSM parameters that publish each resource's identifier under the
@@ -197,7 +197,7 @@ _AURORA_BOOTSTRAP_LAMBDA_TIMEOUT_MINUTES = 5
 
 
 class DataStack(Stack):
-    """Aurora, DynamoDB, S3, and Knowledge Bases for Amazon Bedrock for the sample.
+    """Aurora, DynamoDB, S3, and Amazon Bedrock Knowledge Bases for the sample.
 
     Public attributes consumed by downstream stacks (primarily
     :class:`infra.stacks.agent_stack.AgentStack`):
@@ -562,7 +562,7 @@ class DataStack(Stack):
         self.aurora_bootstrap.node.add_dependency(self.aurora_cluster)
 
         # ------------------------------------------------------------------
-        # Knowledge Bases for Amazon Bedrock service role (Req 2.1, 2.2, 14.1)
+        # Amazon Bedrock Knowledge Bases service role (Req 2.1, 2.2, 14.1)
         # ------------------------------------------------------------------
         # Bedrock assumes this role when it:
         #   1. Lists / reads objects from the documents bucket during
@@ -591,7 +591,7 @@ class DataStack(Stack):
                 },
             ),
             description=(
-                "Role assumed by Knowledge Bases for Amazon Bedrock to read the "
+                "Role assumed by Amazon Bedrock Knowledge Bases to read the "
                 "documents S3 bucket, call the Titan embeddings model, "
                 "and write vectors into Aurora pgvector via RDS Data API."
             ),
@@ -680,7 +680,7 @@ class DataStack(Stack):
         )
 
         # ------------------------------------------------------------------
-        # Knowledge Bases for Amazon Bedrock (Req 2.1, 2.2)
+        # Amazon Bedrock Knowledge Bases (Req 2.1, 2.2)
         # ------------------------------------------------------------------
         # L1 constructs are used deliberately: the L2 ``bedrock``
         # constructs in ``aws-cdk-lib`` 2.173 are still marked

@@ -10,7 +10,7 @@ the blog post (link will be added at publication time).
 
 ### What ships in v1.0.0
 
-**Multi-agent system (Strands SDK on AgentCore Runtime)**
+**Multi-agent system (Strands SDK on Amazon Bedrock AgentCore Runtime)**
 
 - One supervisor agent using the agents-as-tools pattern.
 - Four specialist agents — Target Screening, Financial Analysis,
@@ -22,7 +22,7 @@ the blog post (link will be added at publication time).
 
 **Grounding and memory**
 
-- Knowledge Bases for Amazon Bedrock over a synthetic S3-backed document
+- Amazon Bedrock Knowledge Bases over a synthetic S3-backed document
   corpus (CIMs, financial summaries, press packs, governance
   checklist), indexed into Aurora pgvector.
 - Text-to-SQL tool that translates natural language into read-only

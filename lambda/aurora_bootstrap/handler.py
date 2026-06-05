@@ -4,8 +4,8 @@ Brings the Aurora Serverless v2 cluster up to the state the rest of
 the sample expects before any downstream resource touches it:
 
 1. Install the ``pgvector`` extension in the ``mna`` database so the
-   Knowledge Bases for Amazon Bedrock can persist embeddings produced by the
-   Titan model (design §Data Model - Knowledge Bases for Amazon Bedrock).
+   Amazon Bedrock Knowledge Bases can persist embeddings produced by the
+   Titan model (design §Data Model - Amazon Bedrock Knowledge Bases).
 2. Apply the structured target-company schema shipped in
    ``data/schemas/target_companies.sql`` (design §Data Model - Aurora
    PostgreSQL Schema).

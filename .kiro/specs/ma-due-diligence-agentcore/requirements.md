@@ -4,17 +4,17 @@
 
 This document defines the requirements for an open-source AWS sample that demonstrates a multi-agent system for M&A due diligence in the transportation and logistics industry. The sample accompanies an AWS Machine Learning blog post and must enable readers to deploy, run, and tear down a working system with minimal friction.
 
-The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents coordinated by a supervisor agent, all built with the Strands SDK. Agents ground their responses in synthetic M&A documents via Knowledge Bases for Amazon Bedrock, retain context through AgentCore Memory, and are subject to safety controls via AWS Bedrock Guardrails and a custom citation-validation evaluator.
+The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents coordinated by a supervisor agent, all built with the Strands SDK. Agents ground their responses in synthetic M&A documents via Amazon Bedrock Knowledge Bases, retain context through AgentCore Memory, and are subject to safety controls via Amazon Bedrock Guardrails and a custom citation-validation evaluator.
 
 ### In Scope (v1)
 
 - Multi-agent orchestration using Strands SDK on Amazon Bedrock AgentCore Runtime
 - Four specialist agents coordinated by a supervisor: Target Screening, Financial Analysis, Strategic Fit, Compliance Validation
-- RAG over synthetic M&A documents via Knowledge Bases for Amazon Bedrock
-- Text-to-SQL over structured target-company data in AWS Aurora PostgreSQL Serverless v2
+- RAG over synthetic M&A documents via Amazon Bedrock Knowledge Bases
+- Text-to-SQL over structured target-company data in Amazon Aurora PostgreSQL Serverless v2
 - Persistent context via AgentCore Memory
-- Session and cache storage in AWS DynamoDB
-- Safety controls via AWS Bedrock Guardrails
+- Session and cache storage in Amazon DynamoDB
+- Safety controls via Amazon Bedrock Guardrails
 - One custom evaluator demonstrating citation validation
 - One external tool via AgentCore Gateway demonstrating the MCP pattern
 - Observability via Amazon CloudWatch and AWS X-Ray
@@ -52,12 +52,12 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 
 #### Acceptance Criteria
 
-1. WHEN the sample is deployed THEN the system SHALL index synthetic M&A documents in an Knowledge Bases for Amazon Bedrock backed by Amazon S3.
+1. WHEN the sample is deployed THEN the system SHALL index synthetic M&A documents in an Amazon Bedrock Knowledge Bases backed by Amazon S3.
 2. WHEN an agent response is grounded in indexed documents THEN the response SHALL return citations resolvable to the source S3 objects.
 3. WHERE session context must persist across turns THE system SHALL use AgentCore Memory.
 4. WHEN the Strategic Fit agent runs THEN it SHALL have access to prior-deal memos via AgentCore Memory.
-5. WHERE structured target company data (e.g., revenue, EBITDA, fleet size, geographic coverage) is stored THE system SHALL use AWS Aurora PostgreSQL Serverless v2.
-6. WHERE session data and cached invocation metadata are stored THE system SHALL use AWS DynamoDB.
+5. WHERE structured target company data (e.g., revenue, EBITDA, fleet size, geographic coverage) is stored THE system SHALL use Amazon Aurora PostgreSQL Serverless v2.
+6. WHERE session data and cached invocation metadata are stored THE system SHALL use Amazon DynamoDB.
 
 ### Requirement 2a: Text-to-SQL
 
@@ -87,7 +87,7 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 
 #### Acceptance Criteria
 
-1. WHERE the supervisor agent processes requests THE system SHALL apply an AWS Bedrock Guardrail configured to filter harmful content and enforce financial-advice disclaimers.
+1. WHERE the supervisor agent processes requests THE system SHALL apply an Amazon Bedrock Guardrails configured to filter harmful content and enforce financial-advice disclaimers.
 2. WHEN an agent returns a response THEN the system SHALL provide a custom evaluator that validates every factual claim has at least one supporting citation.
 3. WHEN a user runs the evaluator from the notebook or CLI THEN the evaluator SHALL produce a pass/fail result with per-claim detail.
 4. WHEN the evaluator produces a result THEN the result SHALL be stored alongside the agent response for auditability.
@@ -101,7 +101,7 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 1. WHEN the data generator runs THEN it SHALL produce at least 3 target-company Confidential Information Memoranda (CIMs), summary financials, press releases, and prior-deal memos.
 2. WHEN the data generator runs THEN it SHALL produce a seed dataset of at least 20 fictional transportation and logistics target companies with structured attributes.
 3. WHERE synthetic documents reference companies THE content SHALL be clearly labeled as synthetic and SHALL NOT reference real companies without disclaimers.
-4. WHEN the data generator runs THEN it SHALL populate Amazon S3, Knowledge Bases for Amazon Bedrock, AWS Aurora PostgreSQL, AWS DynamoDB, and AgentCore Memory.
+4. WHEN the data generator runs THEN it SHALL populate Amazon S3, Amazon Bedrock Knowledge Bases, Amazon Aurora PostgreSQL, Amazon DynamoDB, and AgentCore Memory.
 5. WHERE the data generator is invoked THE system SHALL support invocation either before or after deployment of the agent stack.
 
 ### Requirement 6: Example Prompts
@@ -239,7 +239,7 @@ The sample uses Amazon Bedrock AgentCore Runtime to host four specialist agents 
 #### Acceptance Criteria
 
 1. WHEN the README is delivered THEN it SHALL cover: overview, architecture diagram, prerequisites, deploy, run, cleanup, cost, troubleshooting, and extension points.
-2. WHEN the README is delivered THEN it SHALL link to the companion blog post and to the official AgentCore, Strands, and Knowledge Bases for Amazon Bedrock documentation.
+2. WHEN the README is delivered THEN it SHALL link to the companion blog post and to the official AgentCore, Strands, and Amazon Bedrock Knowledge Bases documentation.
 3. WHERE a specialist agent source file is delivered THE file SHALL include a module docstring describing the agent's role, tools, and an example prompt.
 4. WHEN the README is delivered THEN it SHALL include a clearly labeled "what's implemented vs. what's an extension" table mapped to the architecture diagram.
 
@@ -267,7 +267,7 @@ The sample is considered complete when all of the following are true:
 
 ## Dependencies and Assumptions
 
-1. Readers have an AWS account with AWS Bedrock model access enabled for Anthropic Claude and Amazon Nova model families.
+1. Readers have an AWS account with Amazon Bedrock model access enabled for Anthropic Claude and Amazon Nova model families.
 2. Readers have AWS CLI v2 configured with credentials that grant CloudFormation, Lambda, S3, DynamoDB, IAM, Bedrock, and AgentCore permissions.
 3. Amazon Bedrock AgentCore remains generally available in at least one commercial AWS region at the time of publication.
 4. The Strands SDK remains the recommended orchestration framework for AgentCore at the time of publication.

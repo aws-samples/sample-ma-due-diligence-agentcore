@@ -1,6 +1,6 @@
 # M&A Due Diligence Multi-Agent Sample — Implementation Plan
 
-This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks that build on each other. Each task references the requirements it satisfies. Tasks are grouped by phase to minimize rework — earlier phases produce artifacts that later phases depend on. Execute top to bottom unless a task is explicitly marked independent.
+This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks that build on each other. Each task references the requirements it satisfies. Tasks are grouped by phase to minimize rework — earlier phases produce artifacts that later phases depend on. Run top to bottom unless a task is explicitly marked independent.
 
 ## Phase 1: Repository Foundation
 
@@ -51,8 +51,8 @@ This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks 
   - SSM parameters for downstream discovery
   - _Requirements: 2.5, 2.6, 13.3, 14.3, 14.4, 14.6, 14.7_
 
-- [x] 7. Implement `DataStack` (part 2 of 2): Knowledge Bases for Amazon Bedrock with pgvector
-  - Knowledge Bases for Amazon Bedrock with data source pointing at the S3 bucket
+- [x] 7. Implement `DataStack` (part 2 of 2): Amazon Bedrock Knowledge Bases with pgvector
+  - Amazon Bedrock Knowledge Bases with data source pointing at the S3 bucket
   - Embeddings model: `amazon.titan-embed-text-v2:0`
   - Vector store: reuse the Aurora cluster with pgvector extension
   - KB service role with S3 read + Aurora write permissions
@@ -60,7 +60,7 @@ This plan breaks the M&A Due Diligence Multi-Agent sample into executable tasks 
   - _Requirements: 2.1, 2.2_
 
 - [x] 8. Implement `EvaluatorStack`
-  - Python 3.11 AWS Lambda function for citation check (512 MB, 30 s timeout)
+  - Python 3.11 AWS Lambda function for citation check (512 MB, 30 s timeout — a design choice for this sample, not an AWS limit)
   - Amazon CloudWatch log group with 7-day retention
   - Lambda code imported from `lambda/citation_check/handler.py` (implemented in Phase 3)
   - Expose ARN via SSM `/mna/evaluator/arn`

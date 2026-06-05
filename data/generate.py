@@ -4,10 +4,10 @@ Three subcommands plus a ``--seed-all`` orchestrator wire together the
 three data stores the sample exercises:
 
 * ``companies``  — 25 fictional transportation/logistics targets inserted
-  into AWS Aurora PostgreSQL via the RDS Data API.
+  into Amazon Aurora PostgreSQL via the RDS Data API.
 * ``documents``  — CIM, financial statements, and press-release packs for
   the three spotlight companies, uploaded to S3 and indexed into the
-  Knowledge Bases for Amazon Bedrock.
+  Amazon Bedrock Knowledge Bases.
 * ``memory``     — 3 prior-deal memos written to AgentCore Memory under
   the ``prior_deals`` namespace for the Strategic Fit specialist to read.
 
@@ -409,8 +409,8 @@ def _build_rds_data_client(region_name: str | None = None) -> BaseClient:
 # ---------------------------------------------------------------------------
 
 
-#: AWS Bedrock model used to fill in document narrative when available.
-#: Haiku is cheap and fast; if AWS Bedrock is unreachable the static
+#: Amazon Bedrock model used to fill in document narrative when available.
+#: Haiku is cheap and fast; if Amazon Bedrock is unreachable the static
 #: template still produces a valid document.
 DOCUMENT_MODEL_ID = "anthropic.claude-3-5-haiku-20241022-v1:0"
 
@@ -871,7 +871,7 @@ def trigger_and_poll_ingestion(
 def _memo_body(deal: PriorDealSeed, *, region_name: str | None = None) -> str:
     """Render a ~500-word prior-deal memo body.
 
-    AWS Bedrock is used to expand the narrative when available; the static
+    Amazon Bedrock is used to expand the narrative when available; the static
     template is detailed enough to stand alone when it is not.
     """
 

@@ -30,7 +30,7 @@ This guide covers:
    documented there with a rationale.
 3. Read `.kiro/specs/ma-due-diligence-agentcore/requirements.md` — PRs
    must not break any numbered requirement.
-4. For non-trivial changes, open a GitHub issue first so we can
+4. For changes beyond typo fixes or single-line corrections, open a GitHub issue first so we can
    discuss direction and avoid wasted work.
 
 ---
@@ -369,7 +369,7 @@ license for AWS Samples repositories. By opening a pull request, you
 agree that your contribution is licensed under the same terms.
 
 AWS Samples requires a one-time signed CLA for substantive external
-contributions. Trivial fixes (typos, one-line bug fixes, documentation
+contributions. Minor fixes (typos, one-line bug fixes, documentation
 improvements) do not require a CLA. For anything larger, follow the
 [AWS CLA process](https://github.com/aws/aws-cla) — the bot will comment
 on your first PR with instructions.

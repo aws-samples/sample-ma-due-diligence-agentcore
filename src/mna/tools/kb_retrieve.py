@@ -201,7 +201,7 @@ def retrieve(
     bedrock_agent_runtime_client: BaseClient | None = None,
     region_name: str | None = None,
 ) -> list[Citation]:
-    """Retrieve grounded passages from Knowledge Bases for Amazon Bedrock.
+    """Retrieve grounded passages from Amazon Bedrock Knowledge Bases.
 
     Parameters
     ----------

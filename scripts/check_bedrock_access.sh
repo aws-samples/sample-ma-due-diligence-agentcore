@@ -10,7 +10,7 @@
 # What "failure" means
 #   The script exits with status 1 and prints a link to the Amazon Bedrock model
 #   access console. No resources are created yet, so the reader just
-#   requests access (one click per family) and re-runs.
+#   requests access (one action per family) and re-runs.
 #
 # Method
 #   - Call ``bedrock:ListFoundationModels`` filtered by provider.

@@ -93,7 +93,7 @@ All data in S3, DynamoDB, Aurora, and AgentCore Memory will be deleted.
 
 "@ | Write-Host
 
-    $confirm = Read-Host "Type 'yes' to continue, anything else to cancel"
+    $confirm = Read-Host "Enter 'yes' to continue, anything else to cancel"
     if ($confirm -ne "yes") {
         Write-Host "Aborted."
         exit 1
@@ -172,7 +172,7 @@ Run the following to double-check that no billable resources remain
     --query "repositories[?contains(repositoryName, 'mna')].repositoryName" ``
     --output text
 
-  # Knowledge Bases for Amazon Bedrock:
+  # Amazon Bedrock Knowledge Bases:
   aws bedrock-agent list-knowledge-bases --region $Region ``
     --query "knowledgeBaseSummaries[?contains(name, 'mna')].{id:knowledgeBaseId,name:name}" ``
     --output table

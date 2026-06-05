@@ -224,7 +224,7 @@ class GatewayStack(Stack):
             "GatewayServiceRole",
             assumed_by=iam.ServicePrincipal("bedrock-agentcore.amazonaws.com"),
             description=(
-                "Role assumed by Amazon Bedrock AgentCore Gateway to invoke "
+                "Role assumed by AgentCore Gateway to invoke "
                 "the M&A Due Diligence sample's market-data Lambda "
                 "target. Least-privilege by design."
             ),

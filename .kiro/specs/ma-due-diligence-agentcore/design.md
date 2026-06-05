@@ -47,7 +47,7 @@ The design assumes Python 3.11+, AWS CDK v2 (Python), and deployment to a single
         │ SQL tool     │ KB retrieve  │ Memory read  │ Citation check
         ▼              ▼              ▼              ▼
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐
-│ Aurora PG    │ │ Knowledge Bases for Amazon Bedrock   │ │ AgentCore    │ │ Custom Evaluator │
+│ Aurora PG    │ │ Amazon Bedrock Knowledge Bases   │ │ AgentCore    │ │ Custom Evaluator │
 │ Serverless v2│ │ (S3 backed)  │ │ Memory       │ │ (Lambda)         │
 │ (private VPC)│ │              │ │              │ │                  │
 └──────────────┘ └──────┬───────┘ └──────────────┘ └──────────────────┘
@@ -76,7 +76,7 @@ Cross-cutting (one tool routed via AgentCore Gateway):
 | Agent Orchestration: Observability | CloudWatch + X-Ray on all invocations | Implemented |
 | Data: DynamoDB | Session/cache table | Implemented |
 | Data: Aurora PostgreSQL | Serverless v2, target-company schema, text-to-SQL | Implemented |
-| Data: Knowledge Bases for Amazon Bedrock | Unstructured RAG over synthetic CIMs, memos, filings | Implemented |
+| Data: Amazon Bedrock Knowledge Bases | Unstructured RAG over synthetic CIMs, memos, filings | Implemented |
 | Data: S3 | Source documents + generated data | Implemented |
 | Gateway Targets: Lambda | One market-data mock Lambda | Implemented |
 | Gateway Targets: External APIs, MCP servers, API Gateway | Not deployed | Extension |
@@ -127,7 +127,7 @@ sample-ma-due-diligence-agentcore/
 │   │   └── compliance_validation.py
 │   ├── tools/
 │   │   ├── __init__.py
-│   │   ├── kb_retrieve.py        # Knowledge Bases for Amazon Bedrock retrieval with citation shape
+│   │   ├── kb_retrieve.py        # Amazon Bedrock Knowledge Bases retrieval with citation shape
 │   │   ├── text_to_sql.py        # NL → SQL → Aurora via RDS Data API
 │   │   ├── market_data.py        # Calls Gateway-backed Lambda
 │   │   └── memory.py             # AgentCore Memory wrappers
@@ -381,7 +381,7 @@ s3://mna-docs-<account>-<region>/
 
 All files flagged as synthetic in frontmatter.
 
-### Knowledge Bases for Amazon Bedrock
+### Amazon Bedrock Knowledge Bases
 
 - Data source: the S3 bucket above.
 - Chunking: default hierarchical chunking (works well for long documents).
@@ -408,7 +408,7 @@ CDK v2 Python stacks, deployed in dependency order:
 - Aurora credentials in Secrets Manager.
 - DynamoDB `mna-sessions` table.
 - S3 bucket for documents (block public, SSE-S3, versioned).
-- Knowledge Bases for Amazon Bedrock pointing at the S3 bucket and Aurora pgvector.
+- Amazon Bedrock Knowledge Bases pointing at the S3 bucket and Aurora pgvector.
 - SSM parameters for ARNs: `/mna/aurora/cluster_arn`, `/mna/kb/id`, `/mna/docs/bucket`.
 
 ### 3. `EvaluatorStack`
@@ -735,7 +735,7 @@ Documented in the README:
 | `AgentRuntimeRole` | AgentCore Runtime | Invoke Bedrock, Retrieve KB, RDS Data API (read-only), DynamoDB RW, Memory RW, Invoke Gateway, Invoke evaluator Lambda |
 | `EvaluatorLambdaRole` | Lambda | CloudWatch Logs only |
 | `MarketDataLambdaRole` | Lambda | CloudWatch Logs only |
-| `KnowledgeBaseRole` | Knowledge Bases for Amazon Bedrock service | Read S3 bucket, write Aurora pgvector |
+| `KnowledgeBaseRole` | Amazon Bedrock Knowledge Bases service | Read S3 bucket, write Aurora pgvector |
 | `DeploymentRole` | Reader's credentials (not created by sample) | Documented prereq |
 
 Every agent-callable AWS permission is scoped with resource ARNs — no `*` resources except where required (e.g., `bedrock:InvokeModel` for model ARNs).
@@ -769,7 +769,7 @@ Target: under $5 USD for a full deploy-run-cleanup cycle (~1 hour).
 | Aurora Serverless v2 | ~$0.12 | 1 hour at 0.5 ACU minimum |
 | AgentCore Runtime | ~$0.30 | ~5 minutes of active compute across prompts |
 | Bedrock (Claude + Titan Embed) | ~$1.00 | 4 prompts + embedding ingestion |
-| Knowledge Bases for Amazon Bedrock (vector ops) | ~$0.20 | Serverless pricing |
+| Amazon Bedrock Knowledge Bases (vector ops) | ~$0.20 | Serverless pricing |
 | DynamoDB | <$0.01 | On-demand, minimal writes |
 | Lambda (evaluator + market data + waiter) | <$0.01 | Free tier |
 | CodeBuild (ARM64) | <$0.05 | ~5 min per deploy, free tier covers first 100 min/month |

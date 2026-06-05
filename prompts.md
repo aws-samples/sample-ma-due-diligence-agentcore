@@ -49,7 +49,7 @@ prior-deal memos in the AgentCore Memory `prior_deals` namespace.
 
 **What this demonstrates:** Text-to-SQL over Amazon Aurora PostgreSQL
 via the RDS Data API (Requirement 2a), SELECT-only SQL safety, and
-Knowledge Bases for Amazon Bedrock retrieval used as enrichment (Requirement 2.1,
+Amazon Bedrock Knowledge Bases retrieval used as enrichment (Requirement 2.1,
 2.2).
 
 ---
