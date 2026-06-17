@@ -76,12 +76,21 @@ dependency order:
 `NetworkStack → DataStack → EvaluatorStack → GatewayStack → AgentStack`
 
 All AgentCore resources (Runtime, Memory, Gateway) are provisioned
-via native CloudFormation when the installed `aws-cdk-lib` exposes
-the `AWS::BedrockAgentCore::*` L1 resources; otherwise the sample
-falls back to Custom Resources wrapping the AgentCore control-plane
-APIs. Every Custom Resource follows the safety contract documented in
-`CONTRIBUTING.md` (cold-start safe, guaranteed response, 14-minute
-polling cap, delete-of-missing idempotency).
+using the stable **L2 constructs** in `aws-cdk-lib` (`aws_bedrockagentcore`
+module, requires `aws-cdk-lib>=2.258.1`). The previous Custom Resource
+fallback path has been removed. IAM is simplified using L2 grant helpers
+(`memory.grant_read()`, `memory.grant_write()`, `gateway.grant_invoke()`).
+
+### Streaming and timeouts
+
+The supervisor handler is **async** and uses `agent.stream_async(prompt)`
+to stream response chunks to the client in real-time. This prevents the
+60-second service timeout on complex multi-specialist chains that can
+take 60–90 seconds. After streaming completes, a final metadata event
+is yielded containing structured citations and the X-Ray trace ID.
+
+The boto3 AgentCore client is configured with `read_timeout=300` seconds
+(up from the default 60 s) to accommodate multi-specialist invocations.
 
 The agent container image (ARM64 Linux) is built in AWS CodeBuild, so
 Docker is **not** required on the reader's machine. See the *Container

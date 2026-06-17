@@ -60,11 +60,19 @@ def list_agents() -> list[str]:
 
 
 def _build_agentcore_client(region_name: str | None = None) -> BaseClient:
-    """Construct a boto3 client for the Amazon Bedrock AgentCore data plane (lazy import)."""
+    """Construct a boto3 client for the Amazon Bedrock AgentCore data plane (lazy import).
+
+    ``read_timeout`` is raised to 300 s (from the boto3 default of 60 s) to
+    accommodate multi-specialist invocations that can take 60–90 seconds when
+    the supervisor chains through several specialists in a single turn.
+    """
 
     import boto3  # Lazy import keeps the package cold-start safe.
+    from botocore.config import Config  # Lazy import.
 
-    kwargs: dict[str, Any] = {}
+    kwargs: dict[str, Any] = {
+        "config": Config(read_timeout=300),
+    }
     resolved_region = region_name or os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
     if resolved_region:
         kwargs["region_name"] = resolved_region
@@ -296,11 +304,79 @@ def _read_response_body(body: Any) -> bytes:
         return b""
 
 
+def _parse_sse_stream(text: str) -> dict[str, Any]:
+    """Parse a Server-Sent Events (SSE) stream into an aggregated payload.
+
+    The AgentCore Runtime streaming handler yields SSE-formatted lines:
+    ``data: <json>\\n\\n``. This function extracts JSON payloads from
+    each ``data:`` line and aggregates text deltas, citations, and
+    metadata into a single dict.
+    """
+
+    aggregated_text: list[str] = []
+    citations: list[Any] = []
+    trace_id: str | None = None
+    session_id: str | None = None
+
+    for line in text.splitlines():
+        line = line.strip()
+        if not line.startswith("data:"):
+            continue
+        payload_str = line[5:].strip()
+        if not payload_str:
+            continue
+
+        # Skip non-JSON data lines (e.g. Python repr strings).
+        if not payload_str.startswith("{") and not payload_str.startswith("["):
+            continue
+
+        try:
+            event = json.loads(payload_str)
+        except json.JSONDecodeError:
+            continue
+
+        if not isinstance(event, dict):
+            continue
+
+        # Check for metadata event (final event from supervisor).
+        if event.get("event") == "metadata":
+            citations.extend(event.get("citations") or [])
+            trace_id = trace_id or event.get("trace_id")
+            session_id = session_id or event.get("session_id")
+            continue
+
+        # Extract text from Bedrock contentBlockDelta events.
+        evt = event.get("event")
+        if isinstance(evt, dict):
+            content_block = evt.get("contentBlockDelta")
+            if isinstance(content_block, dict):
+                delta = content_block.get("delta")
+                if isinstance(delta, dict):
+                    delta_text = delta.get("text")
+                    if isinstance(delta_text, str):
+                        aggregated_text.append(delta_text)
+            continue
+
+        # Fallback: extract text from flat event shapes.
+        aggregated_text.append(_extract_text(event))
+        citations.extend(_extract_raw_citations(event))
+        trace_id = trace_id or event.get("trace_id") or event.get("traceId")
+        session_id = session_id or event.get("session_id") or event.get("sessionId")
+
+    return {
+        "text": "".join(aggregated_text),
+        "citations": citations,
+        "trace_id": trace_id,
+        "session_id": session_id,
+    }
+
+
 def _parse_response_payload(raw_body: bytes) -> dict[str, Any]:
     """Decode the runtime response body into a dict.
 
-    Accepts either a JSON object, a JSON array of event fragments, or
-    plain text. Always returns a dict so downstream parsing is uniform.
+    Accepts either a JSON object, a JSON array of event fragments,
+    an SSE stream (``data: ...`` lines), or plain text. Always returns
+    a dict so downstream parsing is uniform.
     """
 
     if not raw_body:
@@ -308,6 +384,11 @@ def _parse_response_payload(raw_body: bytes) -> dict[str, Any]:
     text = raw_body.decode("utf-8", errors="replace").strip()
     if not text:
         return {}
+
+    # Detect SSE stream format (lines starting with "data:").
+    if text.startswith("data:") or "\ndata:" in text:
+        return _parse_sse_stream(text)
+
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError:

@@ -29,6 +29,15 @@ specified Amazon Bedrock Guardrails to its model. The Guardrail is configured
 with harmful-content filters and a financial-advice denial topic per
 design §Safety Design.
 
+Streaming
+---------
+The handler is async and uses ``agent.stream_async(prompt)`` to yield
+response chunks in real-time. This prevents the 60-second service
+timeout on complex multi-specialist chains that can take 60–90 s.
+After streaming completes, a final metadata event is yielded containing
+collected citations and the X-Ray trace ID parsed from
+``_X_AMZN_TRACE_ID``.
+
 Runtime hosting
 ---------------
 The module is decorated with ``@BedrockAgentCoreApp`` so the built
@@ -48,9 +57,11 @@ Requirements covered: 1.1, 1.5, 4.1, 12.1, 12.2.
 from __future__ import annotations
 
 import os
-from typing import Any
+import re
+from typing import Any, AsyncIterator
 
 from mna.agents import (
+    citation_collector,
     compliance_validation,
     financial_analysis,
     strategic_fit,
@@ -223,6 +234,30 @@ def _build_session_manager(session_id: str | None) -> Any:
 
 
 # ---------------------------------------------------------------------------
+# X-Ray trace ID helper
+# ---------------------------------------------------------------------------
+
+
+_XRAY_ROOT_RE = re.compile(r"Root=([^;]+)")
+
+
+def _extract_trace_id() -> str | None:
+    """Parse the X-Ray root trace ID from ``_X_AMZN_TRACE_ID``.
+
+    Returns ``None`` when the environment variable is absent or does not
+    contain a ``Root=`` segment (e.g. local dev runs without X-Ray).
+
+    Example value of ``_X_AMZN_TRACE_ID``::
+
+        Root=1-abcd1234-ef567890abcdef01;Parent=abc123;Sampled=1
+    """
+
+    raw = os.getenv("_X_AMZN_TRACE_ID") or ""
+    match = _XRAY_ROOT_RE.search(raw)
+    return match.group(1) if match else None
+
+
+# ---------------------------------------------------------------------------
 # AgentCore Runtime entrypoint.
 # ---------------------------------------------------------------------------
 
@@ -230,8 +265,10 @@ app = BedrockAgentCoreApp()
 
 
 @app.entrypoint
-def handler(event: dict[str, Any], _context: Any | None = None) -> dict[str, Any]:
-    """AgentCore Runtime entrypoint for the supervisor.
+async def handler(
+    event: dict[str, Any], _context: Any | None = None
+) -> AsyncIterator[dict[str, Any]]:
+    """AgentCore Runtime entrypoint for the supervisor (async streaming).
 
     Accepts the runtime event shape
     ``{"prompt": str, "session_id": str | None, "agent_name": str | None}``.
@@ -247,15 +284,17 @@ def handler(event: dict[str, Any], _context: Any | None = None) -> dict[str, Any
       a single specialist without deploying a separate AgentCore
       endpoint per agent.
 
+    The handler uses ``agent.stream_async(prompt)`` to yield response
+    chunks to the client in real-time.  After streaming completes a
+    final metadata event is yielded containing structured citations
+    (aggregated by :mod:`mna.agents.citation_collector`) and the X-Ray
+    trace ID so callers can correlate the response with the trace.
+
     A missing or unknown prompt produces a structured error payload so
     the runtime still receives a well-formed response.
 
     Any exception that escapes the dispatch block is logged with a
-    full traceback before being re-raised. Without the explicit log
-    call the traceback stays inside the Python process and never
-    reaches CloudWatch — AgentCore Runtime's ``APPLICATION_LOGS``
-    delivery captures stdout/stderr, and an uncaught exception that
-    bypasses the logger surfaces only as a 500 on the client side.
+    full traceback before being re-raised.
     """
 
     try:
@@ -265,7 +304,8 @@ def handler(event: dict[str, Any], _context: Any | None = None) -> dict[str, Any
                 "supervisor_missing_prompt",
                 extra={"event_keys": list((event or {}).keys())},
             )
-            return {"text": "", "error": "prompt is required"}
+            yield {"text": "", "error": "prompt is required"}
+            return
 
         session_id = (event or {}).get("session_id")
         requested_agent = (event or {}).get("agent_name")
@@ -274,10 +314,7 @@ def handler(event: dict[str, Any], _context: Any | None = None) -> dict[str, Any
 
         # Attach an AgentCore Memory session manager so Strands
         # automatically persists each turn and retrieves prior turns
-        # on the same session_id. This is what makes the Compliance
-        # Validation prompt ("Review the analysis in this session")
-        # work — without it, each invocation starts with a blank
-        # conversation history.
+        # on the same session_id.
         sm = _build_session_manager(session_id)
 
         logger.info(
@@ -292,32 +329,52 @@ def handler(event: dict[str, Any], _context: Any | None = None) -> dict[str, Any
             },
         )
 
+        # Clear the citation accumulator before each dispatch so
+        # citations from a previous request in the same container
+        # instance cannot leak into this response.
+        citation_collector.clear()
+
         if requested_agent == AGENT_NAME:
             agent.session_manager = sm
-            result = agent(prompt)
+            stream = agent.stream_async(prompt)
         elif requested_agent in SPECIALISTS:
             target_agent = SPECIALISTS[requested_agent]
             target_agent.session_manager = sm
-            result = target_agent(prompt)
+            stream = target_agent.stream_async(prompt)
         else:
             logger.warning(
                 "supervisor_unknown_agent_name",
                 extra={"requested_agent": requested_agent},
             )
-            return {
+            yield {
                 "text": "",
                 "error": (
                     f"Unknown agent_name {requested_agent!r}. Valid values: "
                     f"{[AGENT_NAME, *SPECIALISTS.keys()]}."
                 ),
             }
-        return {"text": str(result)}
+            return
+
+        # Stream response chunks to the client in real-time.
+        async for chunk in stream:
+            yield chunk
+
+        # Final metadata event — citations and trace ID for the caller.
+        citations = [c.to_dict() for c in citation_collector.get()]
+        trace_id = _extract_trace_id()
+        yield {
+            "event": "metadata",
+            "citations": citations,
+            "trace_id": trace_id,
+            "session_id": session_id,
+        }
+
     except Exception:
         # Log the full traceback before re-raising so CloudWatch's
         # ``APPLICATION_LOGS`` delivery captures a complete stack
-        # trace. Otherwise the exception surfaces only as a 500 at
-        # the client with no way to see what broke inside the
-        # container.
+        # trace. Without the explicit log call the traceback stays
+        # inside the Python process and surfaces only as a 500 on the
+        # client side.
         logger.exception(
             "supervisor_handler_unhandled_exception",
             extra={
@@ -339,10 +396,6 @@ def _main() -> None:
     """
 
     if not AGENTCORE_APP_AVAILABLE or not STRANDS_AVAILABLE:
-        # Print a clear actionable message when the SDKs aren't
-        # installed. The dev environment does not bundle Strands or
-        # bedrock-agentcore — those land via the Lambda-built container
-        # image instead. See infra/agent_image/Dockerfile.
         missing = []
         if not STRANDS_AVAILABLE:
             missing.append("strands-agents")
