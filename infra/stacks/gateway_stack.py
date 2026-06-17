@@ -38,8 +38,9 @@ from __future__ import annotations
 
 import pathlib
 
-from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
+from aws_cdk import CfnOutput, CfnResource, Duration, Fn, RemovalPolicy, Stack
 from aws_cdk import aws_lambda as lambda_
+from aws_cdk import aws_iam as iam
 from aws_cdk import aws_logs as logs
 from aws_cdk import aws_ssm as ssm
 from aws_cdk import aws_bedrockagentcore as bac
@@ -133,7 +134,7 @@ class GatewayStack(Stack):
         # Register the market-data Lambda as an MCP target with an
         # inline tool schema so AgentCore knows the tool name and
         # argument shape before invocation.
-        self.gateway.add_lambda_target(
+        self.market_data_target = self.gateway.add_lambda_target(
             "MarketDataTarget",
             lambda_function=self.market_data_function,
             gateway_target_name=_GATEWAY_TARGET_NAME,
@@ -179,6 +180,141 @@ class GatewayStack(Stack):
         # downstream stacks and SSM wiring can consume them directly.
         self.gateway_id: str = self.gateway.gateway_id
         self.gateway_arn: str = self.gateway.gateway_arn
+
+        # ------------------------------------------------------------------
+        # Cedar Policy Engine + Policy (L1 constructs)
+        #
+        # Provides deterministic authorization control over the
+        # market-data tool. Only allows queries for transportation,
+        # logistics, and trucking industries — anything else is denied
+        # by default (Cedar default-deny model).
+        # ------------------------------------------------------------------
+
+        # Policy Engine
+        self.cfn_policy_engine = bac.CfnPolicyEngine(
+            self,
+            "PolicyEngine",
+            name="mna_policy_engine",
+            description=(
+                "Cedar policy engine for the M&A Due Diligence sample. "
+                "Restricts market-data tool queries to transportation-"
+                "related industries only."
+            ),
+        )
+        policy_engine_arn = self.cfn_policy_engine.attr_policy_engine_arn
+
+        # Cedar Policy — references the Gateway ARN in the resource scope
+        cfn_gateway = self.gateway.node.default_child
+        cedar_statement = Fn.join("", [
+            'permit(\n',
+            '  principal,\n',
+            '  action == AgentCore::Action::"market-data___get_comparable_multiples",\n',
+            '  resource == AgentCore::Gateway::"',
+            cfn_gateway.attr_gateway_arn,
+            '"\n',
+            ')\n',
+            'when {\n',
+            '  context.input.industry_code == "transportation" ||\n',
+            '  context.input.industry_code == "logistics" ||\n',
+            '  context.input.industry_code == "trucking"\n',
+            '};',
+        ])
+
+        self.cfn_policy = bac.CfnPolicy(
+            self,
+            "TransportationPolicy",
+            name="allow_transportation_only",
+            policy_engine_id=self.cfn_policy_engine.attr_policy_engine_id,
+            definition=bac.CfnPolicy.PolicyDefinitionProperty(
+                cedar=bac.CfnPolicy.CedarPolicyProperty(
+                    statement=cedar_statement,
+                ),
+            ),
+            description=(
+                "Only allow market data queries for transportation, "
+                "logistics, and trucking industries."
+            ),
+            validation_mode="IGNORE_ALL_FINDINGS",
+        )
+        self.cfn_policy.add_dependency(self.cfn_policy_engine)
+        # Policy must wait for the Gateway Target to be fully registered
+        # so the Cedar schema includes the tool action name.
+        target_cfn = self.market_data_target.node.default_child
+        if target_cfn:
+            self.cfn_policy.add_dependency(target_cfn)
+
+        # Grant the Gateway service role permission to evaluate policies
+        self.gateway.role.add_to_principal_policy(
+            iam.PolicyStatement(
+                sid="PolicyEngineEvaluate",
+                effect=iam.Effect.ALLOW,
+                actions=[
+                    "bedrock-agentcore:GetPolicyEngine",
+                    "bedrock-agentcore:AuthorizeAction",
+                    "bedrock-agentcore:PartiallyAuthorizeActions",
+                    "bedrock-agentcore:ListPolicies",
+                    "bedrock-agentcore:GetPolicy",
+                ],
+                resources=[
+                    policy_engine_arn,
+                    self.gateway_arn,
+                ],
+            )
+        )
+
+        # ------------------------------------------------------------------
+        # Custom Resource: Attach policy engine to gateway (with retry)
+        #
+        # This runs AFTER all other resources are created. The Lambda
+        # retries update_gateway until IAM permission propagation
+        # completes — this is deterministic (only succeeds when the
+        # API confirms the association works).
+        # ------------------------------------------------------------------
+        policy_attach_fn = lambda_.Function(
+            self,
+            "PolicyAttachFunction",
+            function_name="mna-policy-attach",
+            runtime=lambda_.Runtime.PYTHON_3_13,
+            handler="handler.handler",
+            code=lambda_.Code.from_asset(str(_REPO_ROOT / "lambda" / "policy_attach")),
+            timeout=Duration.seconds(90),
+            memory_size=128,
+            description="Custom Resource: attach policy engine to gateway with IAM retry",
+        )
+
+        # The CR Lambda needs permission to update the gateway
+        policy_attach_fn.add_to_role_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["bedrock-agentcore:UpdateGateway", "bedrock-agentcore:GetGateway"],
+                resources=[self.gateway_arn],
+            )
+        )
+        policy_attach_fn.add_to_role_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["iam:PassRole"],
+                resources=[self.gateway.role.role_arn],
+            )
+        )
+
+        # Custom Resource that triggers the attachment
+        cr = CfnResource(
+            self,
+            "PolicyAttachCR",
+            type="AWS::CloudFormation::CustomResource",
+            properties={
+                "ServiceToken": policy_attach_fn.function_arn,
+                "GATEWAY_ID": self.gateway_id,
+                "GATEWAY_NAME": _GATEWAY_NAME,
+                "GATEWAY_ROLE_ARN": self.gateway.role.role_arn,
+                "POLICY_ENGINE_ARN": policy_engine_arn,
+            },
+        )
+        # Explicit dependencies: CR runs last
+        cr.add_dependency(self.cfn_policy_engine)
+        cr.add_dependency(self.cfn_policy)
+        cr.add_dependency(cfn_gateway)
 
         # ------------------------------------------------------------------
         # SSM parameter ``/mna/gateway/arn`` (Req 3.1)
