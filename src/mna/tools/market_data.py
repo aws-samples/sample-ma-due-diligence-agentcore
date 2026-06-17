@@ -68,48 +68,39 @@ def _resolve_gateway_url(region_name: str | None = None) -> str:
     return f"https://{gateway_id}.gateway.bedrock-agentcore.{resolved_region}.amazonaws.com/mcp"
 
 
-def _get_cognito_token(region_name: str | None = None) -> str:
-    """Obtain a JWT access token via Cognito client_credentials grant.
+def _get_auth_headers(url: str, body: bytes, region_name: str | None = None) -> dict[str, str]:
+    """Generate SigV4-signed headers for the MCP request.
 
-    The Gateway was created with a default Cognito authorizer. The
-    client ID / secret / domain are resolved from environment variables
-    or from the Cognito user pool associated with the gateway.
+    With IAM-based inbound authorization on the Gateway, the caller
+    authenticates using standard AWS SigV4 signing — the same
+    mechanism used for any other AWS API call. The ambient IAM
+    credentials (from the runtime role or local AWS profile) are used.
     """
-    import base64  # noqa: PLC0415
-    import urllib.request  # noqa: PLC0415
-    import urllib.error  # noqa: PLC0415
+    import botocore.auth  # noqa: PLC0415
+    import botocore.session  # noqa: PLC0415
+    from botocore.awsrequest import AWSRequest  # noqa: PLC0415
+    from urllib.parse import urlparse  # noqa: PLC0415
 
-    client_id = os.getenv("MNA_GATEWAY_CLIENT_ID", "7qoor24cdnvvbqg3ged41feg05")
-    client_secret = os.getenv("MNA_GATEWAY_CLIENT_SECRET", "17bulpnb445su0bd2hr2aputc5a1erbp78fkq423dm8m1pn5oo7i")
-    token_domain = os.getenv(
-        "MNA_GATEWAY_TOKEN_DOMAIN",
-        "mnagatewaystack-agentgateway-57b81449"
-    )
     resolved_region = region_name or os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION") or "us-east-1"
 
-    token_url = f"https://{token_domain}.auth.{resolved_region}.amazoncognito.com/oauth2/token"
+    session = botocore.session.get_session()
+    credentials = session.get_credentials().get_frozen_credentials()
 
-    # client_credentials grant requires Basic auth header
-    credentials = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
+    parsed = urlparse(url)
+    request = AWSRequest(
+        method="POST",
+        url=url,
+        data=body,
+        headers={
+            "Content-Type": "application/json",
+            "Host": parsed.hostname,
+        },
+    )
 
-    body = "grant_type=client_credentials".encode("utf-8")
-    headers = {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": f"Basic {credentials}",
-    }
+    signer = botocore.auth.SigV4Auth(credentials, "bedrock-agentcore", resolved_region)
+    signer.add_auth(request)
 
-    req = urllib.request.Request(token_url, data=body, headers=headers, method="POST")
-
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            token_response = json.loads(resp.read().decode("utf-8"))
-    except Exception as exc:
-        raise MarketDataError(f"Failed to obtain Cognito token: {exc}") from exc
-
-    access_token = token_response.get("access_token")
-    if not access_token:
-        raise MarketDataError(f"Cognito token response missing access_token: {list(token_response.keys())}")
-    return access_token
+    return dict(request.headers)
 
 
 def _call_gateway_mcp(
@@ -122,13 +113,11 @@ def _call_gateway_mcp(
 
     Sends a POST to the Gateway's /mcp endpoint with a JSON-RPC 2.0
     payload using the ``tools/call`` method. Authentication is via
-    a Cognito JWT Bearer token (client_credentials grant).
+    SigV4 (IAM-based inbound authorization) — uses the ambient AWS
+    credentials from the runtime role or local profile.
     """
     import urllib.request  # noqa: PLC0415
     import urllib.error  # noqa: PLC0415
-
-    # Obtain a JWT token from Cognito
-    access_token = _get_cognito_token(region_name=region_name)
 
     payload = {
         "jsonrpc": "2.0",
@@ -141,10 +130,8 @@ def _call_gateway_mcp(
     }
     body = json.dumps(payload).encode("utf-8")
 
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {access_token}",
-    }
+    # Sign the request using SigV4 (IAM-based Gateway auth)
+    headers = _get_auth_headers(gateway_url, body, region_name=region_name)
 
     req = urllib.request.Request(
         gateway_url,

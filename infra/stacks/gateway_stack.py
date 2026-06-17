@@ -127,6 +127,7 @@ class GatewayStack(Stack):
             "AgentGateway",
             gateway_name=_GATEWAY_NAME,
             description="AgentCore Gateway for the M&A Due Diligence sample.",
+            authorizer_configuration=bac.IamAuthorizer(),
         )
 
         # Register the market-data Lambda as an MCP target with an
