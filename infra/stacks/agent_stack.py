@@ -379,6 +379,9 @@ class AgentStack(Stack):
             runtime_env_vars["MNA_GATEWAY_ARN"] = (
                 gateway_stack.gateway_arn_parameter.string_value
             )
+            runtime_env_vars["MNA_GATEWAY_URL"] = (
+                gateway_stack.gateway.gateway_url
+            )
         if evaluator_stack is not None:
             runtime_env_vars["MNA_EVALUATOR_ARN"] = (
                 evaluator_stack.evaluator_function.function_arn
