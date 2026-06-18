@@ -40,6 +40,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from mna.agents import citation_collector
 from mna.agents._base import (
     DEFAULT_SPECIALIST_MODEL,
     Agent,
@@ -66,6 +67,7 @@ def kb_retrieve(query: str, top_k: int = 5) -> list[dict[str, Any]]:
     """
 
     citations = kb_retrieve_fn(query, top_k=top_k)
+    citation_collector.record(citations)
     return [c.to_dict() for c in citations]
 
 
@@ -86,6 +88,7 @@ agent = Agent(
     model=BedrockModel(model_id=DEFAULT_SPECIALIST_MODEL),
     system_prompt=SYSTEM_PROMPT,
     tools=TOOLS,
+    name=AGENT_NAME,
 )
 
 

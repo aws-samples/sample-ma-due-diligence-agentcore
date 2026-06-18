@@ -29,6 +29,8 @@ from __future__ import annotations
 import importlib
 from unittest.mock import patch
 
+import asyncio
+
 import pytest
 
 from mna.agents import (
@@ -179,7 +181,7 @@ def test_supervisor_module_docstring():
 
 
 def test_supervisor_default_model_is_sonnet_when_env_unset(monkeypatch):
-    """Without ``MNA_SUPERVISOR_MODEL`` the default is Claude Sonnet 4.5.
+    """Without ``MNA_SUPERVISOR_MODEL`` the default is Claude Sonnet 4.5 (inference profile).
 
     The module constant is read at import time, so we reload the
     ``_base`` module after clearing the env var to assert the default.
@@ -188,7 +190,7 @@ def test_supervisor_default_model_is_sonnet_when_env_unset(monkeypatch):
     monkeypatch.delenv("MNA_SUPERVISOR_MODEL", raising=False)
     reloaded = importlib.reload(_base)
     try:
-        assert reloaded.DEFAULT_SUPERVISOR_MODEL == "anthropic.claude-sonnet-4-5-v1:0"
+        assert reloaded.DEFAULT_SUPERVISOR_MODEL == "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
     finally:
         # Reload once more under the original env (already cleared here)
         # so cached state in sys.modules stays consistent for later tests.
@@ -237,8 +239,15 @@ def test_supervisor_guardrail_attached_when_env_set(monkeypatch):
 def test_supervisor_handler_rejects_empty_prompt():
     """The supervisor handler returns a structured error on empty prompt."""
 
-    result = supervisor.handler({}, None)
-    assert result == {"text": "", "error": "prompt is required"}
+    async def _run():
+        results = []
+        async for chunk in supervisor.handler({}, None):
+            results.append(chunk)
+        return results
+
+    results = asyncio.run(_run())
+    assert len(results) == 1
+    assert results[0] == {"text": "", "error": "prompt is required"}
 
 
 def test_supervisor_app_entrypoint_registered():
@@ -281,7 +290,7 @@ def test_default_specialist_model_is_haiku_when_env_unset(monkeypatch):
     monkeypatch.delenv("MNA_SPECIALIST_MODEL", raising=False)
     reloaded = importlib.reload(_base)
     try:
-        assert reloaded.DEFAULT_SPECIALIST_MODEL == "anthropic.claude-3-5-haiku-20241022-v1:0"
+        assert reloaded.DEFAULT_SPECIALIST_MODEL == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     finally:
         importlib.reload(_base)
 

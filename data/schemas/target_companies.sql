@@ -28,6 +28,22 @@ CREATE TABLE IF NOT EXISTS mna.target_companies (
     last_updated                       TIMESTAMP DEFAULT NOW()
 );
 
+-- IMPORTANT CONTEXT FOR SQL GENERATION:
+-- All 25 companies in this table are transportation and logistics companies.
+-- There is NO need to filter by industry — every row is already in the
+-- transportation/logistics sector.
+--
+-- Valid service_lines values (operational capabilities, not industry labels):
+--   'cold-chain', 'drayage', 'freight-brokerage', 'intermodal',
+--   'last-mile', 'less-than-truckload', 'ocean-freight', 'rail',
+--   'truckload', 'warehousing'
+--
+-- When a user asks for "transportation companies" or "logistics companies",
+-- do NOT filter on service_lines — simply query by numeric criteria
+-- (revenue_usd, ebitda_margin_pct, fleet_size, employee_count, etc.).
+-- Only filter on service_lines when the user asks for a specific operational
+-- capability (e.g. "cold-chain operators" or "companies with rail service").
+
 CREATE INDEX IF NOT EXISTS idx_tc_revenue
     ON mna.target_companies (revenue_usd);
 

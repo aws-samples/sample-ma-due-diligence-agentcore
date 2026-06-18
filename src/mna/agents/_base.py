@@ -132,6 +132,14 @@ except ImportError:  # pragma: no cover - exercised only when SDK is absent
                 "Install strands-agents to invoke the agent."
             )
 
+        async def stream_async(self, *_args: Any, **_kwargs: Any) -> Any:
+            """Async generator stub — yields nothing, mirrors Strands Agent API."""
+            raise RuntimeError(
+                "Strands SDK is not installed; Agent instances are stubs only. "
+                "Install strands-agents to invoke the agent."
+            )
+            yield  # noqa: RET503 - makes this an async generator
+
         def __repr__(self) -> str:  # pragma: no cover - trivial
             tool_names = [getattr(t, "__name__", repr(t)) for t in self.tools]
             return f"StubAgent(name={self.name!r}, tools={tool_names})"
