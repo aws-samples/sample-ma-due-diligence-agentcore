@@ -257,12 +257,18 @@ def _record_turn(
 
 
 def _read_response_body(body: Any) -> bytes:
-    """Collect the runtime response body, whether streaming or not.
+    """Collect the runtime response body using chunked reads for resilience.
 
     ``bedrock-agentcore:InvokeAgentRuntime`` can return either a bytes
-    payload (non-streaming) or a botocore ``EventStream`` / file-like
-    object (streaming). This helper normalises both into a single bytes
-    blob for JSON decoding.
+    payload (non-streaming) or a botocore ``StreamingBody`` / ``EventStream``
+    (streaming). This helper normalises both into a single bytes blob for
+    JSON decoding.
+
+    For streaming responses, reads in 64 KB chunks so that if the
+    connection drops mid-transfer (``IncompleteRead``, ``ResponseStreamingError``)
+    we return whatever data was already received rather than crashing.
+    This makes long-running agent invocations (60–90 s) resilient to
+    transient connection resets.
     """
 
     if body is None:
@@ -272,17 +278,38 @@ def _read_response_body(body: Any) -> bytes:
     if isinstance(body, str):
         return body.encode("utf-8")
 
-    # botocore StreamingBody exposes .read()
+    # botocore StreamingBody exposes .read(amt).
+    # Read in chunks to survive partial connection drops.
     read = getattr(body, "read", None)
     if callable(read):
-        data = read()
-        if isinstance(data, str):
-            return data.encode("utf-8")
-        return bytes(data or b"")
+        _CHUNK_SIZE = 65536  # 64 KB
+        chunks: list[bytes] = []
+        try:
+            while True:
+                chunk = read(_CHUNK_SIZE)
+                if not chunk:
+                    break
+                if isinstance(chunk, str):
+                    chunk = chunk.encode("utf-8")
+                chunks.append(bytes(chunk))
+        except Exception as exc:
+            # Catch IncompleteRead, ResponseStreamingError, ProtocolError, etc.
+            # Return whatever we already received so the caller can parse
+            # a partial response rather than getting nothing.
+            bytes_received = sum(len(c) for c in chunks)
+            logger.warning(
+                "response_stream_interrupted",
+                extra={
+                    "bytes_received": bytes_received,
+                    "error_type": type(exc).__name__,
+                    "error": str(exc)[:200],
+                },
+            )
+        return b"".join(chunks)
 
     # EventStream-style: iterable of chunk dicts with a 'chunk' field.
     try:
-        chunks: list[bytes] = []
+        chunks_list: list[bytes] = []
         for event in body:
             if isinstance(event, dict):
                 chunk = event.get("chunk") or event.get("payload") or {}
@@ -293,15 +320,24 @@ def _read_response_body(body: Any) -> bytes:
                 if isinstance(part, str):
                     part = part.encode("utf-8")
                 if part:
-                    chunks.append(bytes(part))
+                    chunks_list.append(bytes(part))
             elif isinstance(event, bytes | bytearray):
-                chunks.append(bytes(event))
+                chunks_list.append(bytes(event))
             elif isinstance(event, str):
-                chunks.append(event.encode("utf-8"))
-        return b"".join(chunks)
-    except TypeError:
-        # Not iterable either; fall back to empty bytes.
-        return b""
+                chunks_list.append(event.encode("utf-8"))
+        return b"".join(chunks_list)
+    except Exception as exc:
+        # Same resilience for EventStream iteration failures.
+        bytes_received = sum(len(c) for c in chunks_list)
+        logger.warning(
+            "event_stream_interrupted",
+            extra={
+                "bytes_received": bytes_received,
+                "error_type": type(exc).__name__,
+                "error": str(exc)[:200],
+            },
+        )
+        return b"".join(chunks_list)
 
 
 def _parse_sse_stream(text: str) -> dict[str, Any]:
@@ -422,7 +458,7 @@ def _parse_response_payload(raw_body: bytes) -> dict[str, Any]:
 def _extract_text(payload: dict[str, Any]) -> str:
     """Pull the assistant text out of a runtime payload fragment."""
 
-    for key in ("text", "output_text", "completion", "message"):
+    for key in ("text", "data", "output_text", "completion", "message"):
         value = payload.get(key)
         if isinstance(value, str) and value:
             return value
@@ -551,10 +587,19 @@ def invoke_agent(
         },
     )
 
+    # Generate a trace ID in X-Ray format so the service correlates this
+    # invocation with an X-Ray trace. Format: "Root=1-<hex-epoch>-<24-hex-random>"
+    import time as _time
+
+    _epoch_hex = format(int(_time.time()), "x")
+    _random_hex = uuid.uuid4().hex[:24]
+    generated_trace_id = f"Root=1-{_epoch_hex}-{_random_hex}"
+
     try:
         response = client.invoke_agent_runtime(
             agentRuntimeArn=runtime_arn,
             runtimeSessionId=resolved_session_id,
+            traceId=generated_trace_id,
             payload=payload,
         )
     except Exception as exc:
@@ -578,6 +623,7 @@ def invoke_agent(
         or parsed.get("traceId")
         or response.get("traceId")
         or response.get("TraceId")
+        or generated_trace_id
     )
     resolved_response_session = (
         parsed.get("session_id")
@@ -657,22 +703,22 @@ def get_last_trace(
     if not trace_id:
         raise ClientError("trace_id is required")
 
+    # X-Ray APIs expect the raw trace ID (e.g. "1-6a343b19-3cf863b1...")
+    # not the full header format ("Root=1-6a343b19-..."). Strip the prefix.
+    raw_trace_id = trace_id
+    if raw_trace_id.startswith("Root="):
+        raw_trace_id = raw_trace_id[5:]
+    # Also strip any trailing fields (;Parent=...;Sampled=...)
+    if ";" in raw_trace_id:
+        raw_trace_id = raw_trace_id.split(";")[0]
+
     client = xray_client or _build_xray_client(region_name=region_name)
 
+    # Use batch_get_traces to fetch the trace directly by ID.
+    # get_trace_summaries requires StartTime/EndTime and doesn't accept
+    # TraceIds directly — it's a filter-based search API.
     try:
-        summary_response = client.get_trace_summaries(TraceIds=[trace_id])
-    except Exception as exc:
-        logger.error(
-            "xray_get_trace_summaries_failed",
-            extra={"trace_id": trace_id, "error_type": type(exc).__name__},
-        )
-        raise ClientError(f"GetTraceSummaries failed for {trace_id}: {exc}") from exc
-
-    summaries = list(summary_response.get("TraceSummaries") or [])
-    summary = summaries[0] if summaries else {}
-
-    try:
-        batch_response = client.batch_get_traces(TraceIds=[trace_id])
+        batch_response = client.batch_get_traces(TraceIds=[raw_trace_id])
     except Exception as exc:
         logger.error(
             "xray_batch_get_traces_failed",
@@ -681,7 +727,12 @@ def get_last_trace(
         raise ClientError(f"BatchGetTraces failed for {trace_id}: {exc}") from exc
 
     segments: list[dict[str, Any]] = []
+    summary: dict[str, Any] = {}
     for trace in batch_response.get("Traces") or []:
+        # Extract duration from the trace metadata if available.
+        duration = trace.get("Duration")
+        if duration is not None:
+            summary["Duration"] = duration
         for segment in trace.get("Segments") or []:
             doc = segment.get("Document")
             if isinstance(doc, str):

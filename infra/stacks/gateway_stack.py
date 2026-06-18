@@ -203,21 +203,29 @@ class GatewayStack(Stack):
         )
         policy_engine_arn = self.cfn_policy_engine.attr_policy_engine_arn
 
-        # Cedar Policy — references the Gateway ARN in the resource scope
+        # Cedar Policy — references the Gateway ARN in the resource scope.
+        # The policy is maintained in a separate .cedar file for readability
+        # and version control. The {{GATEWAY_ARN}} placeholder is replaced
+        # at synth time with the actual Gateway ARN token.
         cfn_gateway = self.gateway.node.default_child
+        _CEDAR_POLICY_PATH = pathlib.Path(__file__).resolve().parent.parent / "policies" / "market_data_gateway.cedar"
+        cedar_template = _CEDAR_POLICY_PATH.read_text(encoding="utf-8")
+
+        # Strip comments (lines starting with //) since they are not valid
+        # in the Cedar statement submitted to the API.
+        cedar_body = "\n".join(
+            line for line in cedar_template.splitlines()
+            if not line.strip().startswith("//")
+        ).strip()
+
+        # Replace the placeholder with the actual Gateway ARN (CFN token).
+        # Fn.join is needed because the ARN is a CloudFormation token at
+        # synth time, not a plain string.
+        parts = cedar_body.split("{{GATEWAY_ARN}}")
         cedar_statement = Fn.join("", [
-            'permit(\n',
-            '  principal,\n',
-            '  action == AgentCore::Action::"market-data___get_comparable_multiples",\n',
-            '  resource == AgentCore::Gateway::"',
+            parts[0],
             cfn_gateway.attr_gateway_arn,
-            '"\n',
-            ')\n',
-            'when {\n',
-            '  context.input.industry_code == "transportation" ||\n',
-            '  context.input.industry_code == "logistics" ||\n',
-            '  context.input.industry_code == "trucking"\n',
-            '};',
+            parts[1],
         ])
 
         self.cfn_policy = bac.CfnPolicy(

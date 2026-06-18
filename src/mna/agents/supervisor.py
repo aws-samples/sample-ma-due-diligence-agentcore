@@ -356,8 +356,33 @@ async def handler(
             return
 
         # Stream response chunks to the client in real-time.
-        async for chunk in stream:
-            yield chunk
+        # Filter: only yield text data events (skip internal tool-call
+        # reasoning, contentBlockDelta plumbing, and other Strands internals).
+        # Batch: accumulate text tokens and flush every ~500 characters
+        # to reduce the total number of SSE events from thousands to tens.
+        # This cuts the streamed payload from ~100 MB to a few KB, preventing
+        # HTTP connection drops on long multi-tool invocations while still
+        # giving the client incremental updates every ~0.5-1 seconds.
+        _BATCH_THRESHOLD = 500  # characters before flushing a chunk
+        text_buffer: list[str] = []
+        buffer_len = 0
+
+        async for event in stream:
+            # Extract text from Strands streaming events.
+            if isinstance(event, dict) and "data" in event:
+                token = str(event["data"])
+                if token:
+                    text_buffer.append(token)
+                    buffer_len += len(token)
+                    if buffer_len >= _BATCH_THRESHOLD:
+                        yield {"text": "".join(text_buffer)}
+                        text_buffer = []
+                        buffer_len = 0
+            # Skip all other event types (tool_use internals, reasoning, etc.)
+
+        # Flush any remaining buffered text.
+        if text_buffer:
+            yield {"text": "".join(text_buffer)}
 
         # Final metadata event — citations and trace ID for the caller.
         citations = [c.to_dict() for c in citation_collector.get()]

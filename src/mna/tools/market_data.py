@@ -212,6 +212,11 @@ def get_comparable_multiples(
     if not isinstance(deal_size_band, str) or not deal_size_band.strip():
         raise MarketDataError("deal_size_band must be a non-empty string")
 
+    # Normalize to lowercase so the Cedar policy (which uses case-sensitive
+    # `like` patterns) always matches regardless of the casing the LLM produces.
+    industry_code = industry_code.strip().lower()
+    deal_size_band = deal_size_band.strip()
+
     resolved_url = gateway_url or _resolve_gateway_url(region_name=region_name)
 
     arguments = {
