@@ -37,9 +37,8 @@ Requirements satisfied:
   + Python + Node + PowerShell can deploy this pipeline without
   installing Docker (because Docker runs inside CodeBuild).
 * **11a.1–11a.9** — the two CR Lambdas follow the shared CR base
-  module (task 10); unit tests in ``tests/unit/test_build_trigger.py``
-  and ``tests/unit/test_build_waiter.py`` cover the full CR safety
-  matrix.
+  module (task 10); see the *Custom Resource review checklist* in
+  ``CONTRIBUTING.md`` for the full CR safety matrix.
 
 Public attributes exposed to :class:`AgentStack`:
 
