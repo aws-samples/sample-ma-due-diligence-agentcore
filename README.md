@@ -26,6 +26,7 @@ This sample accompanies a companion AWS Machine Learning blog post (coming soon)
 
 - [Overview](#overview)
 - [Architecture](#architecture)
+- [Security Architecture](#security-architecture)
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
 - [Running the walkthrough](#running-the-walkthrough)
@@ -96,6 +97,47 @@ The agent container image (ARM64 Linux) is built in AWS CodeBuild, so
 Docker is **not** required on the reader's machine. See the *Container
 Build Pipeline* section of `.kiro/specs/ma-due-diligence-agentcore/design.md`
 for the full flow.
+
+---
+
+## Security Architecture
+
+M&A due-diligence data is highly confidential — target-company
+financials, deal terms, and integration plans — so security is layered
+across every tier of the sample rather than bolted on as an
+afterthought:
+
+- **Identity and access (IAM)** — every AgentCore-callable AWS
+  permission is scoped to a specific resource ARN (model, guardrail,
+  knowledge base, table, memory, gateway). The only `Resource: "*"`
+  statements are the two AWS requires (ECR token issuance,
+  foundation-model ARN wildcards); both are documented inline in
+  `infra/stacks/agent_stack.py`.
+- **Fine-grained authorization (Cedar)** — the AgentCore Gateway's
+  market-data tool is protected by a Cedar policy engine with a
+  default-deny model (`infra/stacks/gateway_stack.py` +
+  `infra/policies/market_data_gateway.cedar`). A `permit` statement
+  allows the tool to run only when the requested industry code
+  matches transportation, logistics, or trucking — every other
+  request is denied before the tool executes. This adds
+  attribute-based, input-aware authorization on top of IAM's coarser
+  action/resource model.
+- **Network isolation** — Amazon Aurora runs in private isolated
+  subnets with no route to the internet; VPC interface endpoints keep
+  Secrets Manager and RDS Data API traffic off the public internet
+  entirely (`infra/stacks/network_stack.py`).
+- **Encryption at rest** — every data store (S3, DynamoDB, Aurora) is
+  encrypted with AWS-managed KMS keys; the documents bucket blocks all
+  public access and enforces TLS on every request.
+- **Guardrails** — Amazon Bedrock Guardrails filter harmful content
+  and block personalized financial-advice requests on every
+  supervisor invocation.
+- **Secrets management** — Aurora credentials are auto-generated into
+  Secrets Manager (nothing hardcoded); IAM database authentication
+  offers a passwordless path for the agent runtime.
+
+See the [IAM Summary](#iam-summary) section below for the full role
+and permission breakdown.
 
 ---
 
@@ -325,7 +367,8 @@ exists.
 | Data — S3 | Documents bucket (block public, SSE-S3, versioned) | SSE-KMS with customer managed key, Object Lock |
 | Gateway Targets — Lambda | One market-data mock Lambda | Additional tools (HTTP APIs, third-party APIs, SaaS connectors) |
 | Evaluation — Custom evaluator | Citation-check Lambda + local mirror | AgentCore Evaluations, LLM-as-judge, continuous monitoring |
-| Security — IAM | Least-privilege roles, scoped resource ARNs | Cedar policies |
+| Security — IAM | Least-privilege roles, scoped resource ARNs | — |
+| Security — Authorization | Cedar policy engine on the AgentCore Gateway (default-deny, industry-scoped market-data tool access) | Cedar policies on additional tools/gateways |
 | Security — Encryption | AWS-managed KMS (SSE-S3, DynamoDB, Aurora) | Customer-managed KMS keys |
 | Security — Network | Aurora in private isolated subnets; VPC endpoints for Secrets Manager, RDS Data API, S3 | PrivateLink everywhere, AWS Config rules, CloudTrail data events |
 

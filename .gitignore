@@ -98,3 +98,10 @@ lambda/_vendor/
 # ---- Scratch data (temp debugging/testing artifacts) ----
 scratch_data/
 .kiro/
+
+# ---- Local-only notes (not for the public repo) ----
+RELEASE_NOTES.md
+docs/requirements_coverage.md
+run.json
+citations.json
+response.txt
