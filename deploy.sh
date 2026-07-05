@@ -237,17 +237,9 @@ fi
 log "Step 7/7: Deployment complete"
 cat <<EOF
 
-Next steps:
-  1. Open the walkthrough notebook:
-       jupyter lab notebooks/walkthrough.ipynb
-     (or "jupyter notebook notebooks/walkthrough.ipynb")
-
-  2. Alternatively, invoke an agent from the CLI:
-       python -m cli.invoke list-agents
-       python -m cli.invoke invoke supervisor "Screen mid-market logistics targets."
-
-  3. Tear down all billable resources when you are done:
-       ./cleanup.sh
+Deployment complete. See the README for next steps (running the
+walkthrough notebook, invoking agents from the CLI, and tearing down
+resources with ./cleanup.sh).
 
 Cost reminder: leaving the stack deployed continues to accrue charges
 (primarily Aurora Serverless v2). Run cleanup.sh as soon as you are done.
