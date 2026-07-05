@@ -10,9 +10,9 @@
     next-steps message.
 
     What this script does (in order)
-      1. Preflight: region check + Amazon Bedrock model-access check. Both exit
-         non-zero with actionable error messages, so deployment fails
-         fast before any billable resource is created (Requirement 10.2).
+      1. Preflight: region check. Exits non-zero with an actionable
+         error message, so deployment fails fast before any billable
+         resource is created (Requirement 10.2).
       2. Set up a local Python virtual environment under `.venv\` and
          install pinned dependencies from requirements.txt. Keeps the
          reader's global Python clean (design §"Virtual environment").
@@ -31,8 +31,8 @@
       1  preflight or deployment failure (terminates at the failing step)
 
 .PARAMETER SkipPreflight
-    Skip scripts/check_region.ps1 and scripts/check_bedrock_access.ps1.
-    Useful for re-runs where the reader already confirmed the environment.
+    Skip scripts/check_region.ps1. Useful for re-runs where the reader
+    already confirmed the environment.
 
 .PARAMETER SkipSeed
     Skip `data/generate.py --seed-all`. Useful if the reader plans to run
@@ -90,11 +90,9 @@ function Invoke-Checked {
 # Step 1: Preflight
 # ---------------------------------------------------------------------------
 if (-not $SkipPreflight) {
-    Write-Step "Step 1/7: Preflight checks (region + Bedrock access)"
+    Write-Step "Step 1/7: Preflight checks (region)"
     & "$RepoRoot\scripts\check_region.ps1"
     if ($LASTEXITCODE -ne 0) { throw "check_region.ps1 failed." }
-    & "$RepoRoot\scripts\check_bedrock_access.ps1"
-    if ($LASTEXITCODE -ne 0) { throw "check_bedrock_access.ps1 failed." }
 } else {
     Write-Step "Step 1/7: Preflight checks skipped (-SkipPreflight)"
 }

@@ -145,7 +145,7 @@ and permission breakdown.
 
 | Tool | Version | Windows | macOS | Linux |
 |---|---|---|---|---|
-| AWS account | n/a | Amazon Bedrock model access enabled for Anthropic Claude and Amazon Titan | same | same |
+| AWS account | n/a | Any account with permission to deploy the stacks below | same | same |
 | AWS CLI | v2.15+ | MSI installer | `brew install awscli` | distribution package / pip |
 | Python | 3.11+ | [python.org](https://www.python.org/downloads/) installer | `brew install python@3.11` | distribution package / pyenv |
 | Node.js | 20+ | [nodejs.org](https://nodejs.org/) installer | `brew install node` | distribution package / nvm |
@@ -202,8 +202,7 @@ deploy time. See the authoritative list in the
 
 The deploy script will:
 
-1. Verify the AWS region is GA for AgentCore and the required Bedrock
-   model IDs are accessible.
+1. Verify the AWS region is GA for AgentCore.
 2. Create a local `.venv`.
 3. Install pinned dependencies from `requirements.txt`.
 4. Run `cdk bootstrap` (idempotent).
@@ -220,7 +219,7 @@ Skip flags for re-runs:
 
 | Flag (bash / PowerShell) | Purpose |
 |---|---|
-| `--skip-preflight` / `-SkipPreflight` | Skip region + Bedrock-access checks. |
+| `--skip-preflight` / `-SkipPreflight` | Skip the region check. |
 | `--skip-venv` / `-SkipVenv` | Use active Python instead of creating `.venv`. |
 | `--skip-seed` / `-SkipSeed` | Skip `data/generate.py --seed-all`. |
 | `--skip-smoke` / `-SkipSmoke` | Skip the post-deploy smoke test. |
@@ -457,7 +456,6 @@ every sweep.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `check_region.*` exits non-zero: "region not supported" | Current AWS region is not GA for AgentCore. | Set `AWS_REGION` or `aws configure set region` to one of the supported regions listed above. |
-| `check_bedrock_access.*` exits non-zero: "model access not enabled" | Anthropic Claude or Amazon Titan model access is not enabled for the account/region. | Open the [Amazon Bedrock model access console](https://console.aws.amazon.com/bedrock/home#/modelaccess) and enable access to the Claude family (Sonnet 4.5 + Haiku) and Amazon Titan Embed. |
 | `cdk bootstrap` fails with "AccessDenied on s3:PutBucketPublicAccessBlock" | Your caller identity lacks bootstrap permissions. | Use credentials with `AdministratorAccess` for the first bootstrap; downgrade afterwards. |
 | `cdk deploy` fails on AgentStack with "CodeBuild build failed" | The agent image could not be built. Usually a Docker Hub rate-limit or a dependency-resolution error. | Re-run `deploy.sh` — the build trigger re-attempts. If it fails twice, open the CloudWatch log group `/aws/codebuild/mna-agent-builder`. |
 | `cdk deploy` on AgentStack hangs for >15 minutes after "Build started" | Build waiter polling timed out. | Re-run `deploy.sh`. A cold CodeBuild start plus a cold Aurora provision can push the first deploy close to the waiter cap. |

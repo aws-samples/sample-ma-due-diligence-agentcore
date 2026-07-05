@@ -8,9 +8,9 @@
 #   parity enforced by Requirement NFR-RT-7 / 11.7).
 #
 # What this script does (in order)
-#   1. Preflight: region check + Amazon Bedrock model-access check. Both exit
-#      non-zero with actionable error messages, so deployment fails fast
-#      before any billable resource is created (Requirement 10.2).
+#   1. Preflight: region check. Exits non-zero with an actionable error
+#      message, so deployment fails fast before any billable resource
+#      is created (Requirement 10.2).
 #   2. Set up a local Python virtual environment under `.venv/` and
 #      install pinned dependencies from requirements.txt. Keeps the
 #      reader's global Python clean (design §"Virtual environment").
@@ -29,8 +29,7 @@
 #   1  preflight or deployment failure (terminates at the failing step)
 #
 # Optional flags
-#   --skip-preflight   Skip scripts/check_region.sh and
-#                      scripts/check_bedrock_access.sh. Handy for re-runs
+#   --skip-preflight   Skip scripts/check_region.sh. Handy for re-runs
 #                      where the reader already confirmed the environment.
 #   --skip-seed        Skip `data/generate.py --seed-all`. Useful if the
 #                      reader plans to run the generator manually with
@@ -80,9 +79,8 @@ log() { printf '\n[deploy] %s\n' "$*"; }
 # Step 1: Preflight
 # ---------------------------------------------------------------------------
 if [ "$SKIP_PREFLIGHT" -eq 0 ]; then
-  log "Step 1/7: Preflight checks (region + Bedrock access)"
+  log "Step 1/7: Preflight checks (region)"
   bash "$REPO_ROOT/scripts/check_region.sh"
-  bash "$REPO_ROOT/scripts/check_bedrock_access.sh"
 else
   log "Step 1/7: Preflight checks skipped (--skip-preflight)"
 fi
