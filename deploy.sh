@@ -11,9 +11,13 @@
 #   1. Preflight: region check. Exits non-zero with an actionable error
 #      message, so deployment fails fast before any billable resource
 #      is created (Requirement 10.2).
-#   2. Set up a local Python virtual environment under `.venv/` and
-#      install pinned dependencies from requirements.txt. Keeps the
-#      reader's global Python clean (design §"Virtual environment").
+#   2. Set up a local Python virtual environment under `.venv/`,
+#      install pinned dependencies from requirements.txt, and install
+#      this project itself in editable mode (`pip install -e .`) so the
+#      `mna` package and its `mna` console-script entry point are
+#      available for data/generate.py, tests/smoke_test.py, the
+#      notebook, and Step 2 of the walkthrough. Keeps the reader's
+#      global Python clean (design §"Virtual environment").
 #   3. `cdk bootstrap` — idempotent. Skipped on accounts where the
 #      bootstrap stack is already present.
 #   4. `cdk deploy --all` — CDK resolves the Network → Data → Evaluator
@@ -112,6 +116,15 @@ if [ "$SKIP_VENV" -eq 0 ]; then
   log "Upgrading pip and installing pinned requirements.txt"
   python -m pip install --quiet --upgrade pip
   python -m pip install --quiet -r "$REPO_ROOT/requirements.txt"
+
+  # Install this project in editable mode so the `mna` package (used by
+  # data/generate.py, tests/smoke_test.py, and the notebook) and the
+  # `mna` console-script entry point (used in Step 2 of the walkthrough)
+  # are both available. Without this, `mna invoke ...` is not found on
+  # PATH and `data/generate.py --seed-all` fails with
+  # "ModuleNotFoundError: No module named 'mna'".
+  log "Installing project in editable mode (pip install -e .)"
+  python -m pip install --quiet -e "$REPO_ROOT"
 
   # --------------------------------------------------------------
   # Vendor boto3 into lambda/_vendor (see deploy.ps1 for rationale).

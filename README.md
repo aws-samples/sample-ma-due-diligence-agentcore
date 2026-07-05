@@ -203,14 +203,18 @@ deploy time. See the authoritative list in the
 The deploy script will:
 
 1. Verify the AWS region is GA for AgentCore.
-2. Create a local `.venv`.
-3. Install pinned dependencies from `requirements.txt`.
-4. Run `cdk bootstrap` (idempotent).
-5. Run `cdk deploy --all --require-approval never` in dependency order.
-6. Seed synthetic data via `python data/generate.py --seed-all`.
-7. Run `tests/smoke_test.py` against the deployed stack as a post-deploy
+2. Create a local `.venv`, install pinned dependencies from
+   `requirements.txt`, and install this project itself in editable
+   mode (`pip install -e .`). That last step registers the `mna`
+   console-script entry point you'll use starting in
+   [Running the Walkthrough](#running-the-walkthrough) — no separate
+   install needed.
+3. Run `cdk bootstrap` (idempotent).
+4. Run `cdk deploy --all --require-approval never` in dependency order.
+5. Seed synthetic data via `python data/generate.py --seed-all`.
+6. Run `tests/smoke_test.py` against the deployed stack as a post-deploy
    verification step.
-8. Print next-steps instructions.
+7. Print next-steps instructions.
 
 First-time deploys take about 20-25 minutes (Amazon Aurora Serverless v2 is
 the long pole). Re-deploys take a few minutes.

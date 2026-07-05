@@ -131,6 +131,15 @@ if (-not $SkipVenv) {
     Invoke-Checked "python" "-m" "pip" "install" "--quiet" "--upgrade" "pip"
     Invoke-Checked "python" "-m" "pip" "install" "--quiet" "-r" (Join-Path $RepoRoot "requirements.txt")
 
+    # Install this project in editable mode so the `mna` package (used by
+    # data/generate.py, tests/smoke_test.py, and the notebook) and the
+    # `mna` console-script entry point (used in Step 2 of the walkthrough)
+    # are both available. Without this, `mna invoke ...` is not found on
+    # PATH and `data/generate.py --seed-all` fails with
+    # "ModuleNotFoundError: No module named 'mna'".
+    Write-Host "Installing project in editable mode (pip install -e .)"
+    Invoke-Checked "python" "-m" "pip" "install" "--quiet" "-e" $RepoRoot
+
     # --------------------------------------------------------------
     # Vendor boto3 into lambda/_vendor so every CR Lambda ships the
     # same SDK version we tested locally. The Lambda managed runtime
