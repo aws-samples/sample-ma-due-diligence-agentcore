@@ -6,8 +6,9 @@ three data stores the sample exercises:
 * ``companies``  — 25 fictional transportation/logistics targets inserted
   into Amazon Aurora PostgreSQL via the RDS Data API.
 * ``documents``  — CIM, financial statements, and press-release packs for
-  the three spotlight companies, uploaded to S3 and indexed into the
-  Amazon Bedrock Knowledge Bases.
+  every company in the roster (25 by default; pass --spotlight-only to
+  generate for just the 3 named SPOTLIGHT_COMPANY_NAMES), uploaded to S3
+  and indexed into the Amazon Bedrock Knowledge Bases.
 * ``memory``     — 3 prior-deal memos written to AgentCore Memory under
   the ``prior_deals`` namespace for the Strategic Fit specialist to read.
 
@@ -126,9 +127,15 @@ SERVICE_LINES: tuple[str, ...] = (
     "rail",
 )
 
-#: The three "spotlight" targets that ``documents`` generates for.
-#: Slugs are derived from the canonical company id (below) so the S3
-#: paths match the design.
+#: Historically the three "spotlight" targets that ``documents``
+#: generated CIMs for. Retained (and still used by name in
+#: ``prompts.md`` / the README's example prompts) so those three
+#: companies are guaranteed to have documents even if a reader trims
+#: ``cmd_documents`` back down to a subset. As of the fix for the
+#: "top screening hit has no CIM" issue, ``cmd_documents`` generates
+#: documents for every company in the roster (see
+#: :func:`cmd_documents`), not just these three — so any company a
+#: screening query surfaces will have a CIM to enrich against.
 SPOTLIGHT_COMPANY_NAMES: tuple[str, ...] = (
     "Example Corp",
     "AnyCompany Freight",
@@ -215,7 +222,7 @@ SYNTHETIC_BANNER = "SYNTHETIC DATA - NOT REAL"
 
 
 def _slug(name: str) -> str:
-    """Convert a display name like ``"Example Corp"`` to ``"acme_logistics"``."""
+    """Convert a display name like ``"Example Corp"`` to ``"example_corp"``."""
 
     cleaned = [c.lower() if c.isalnum() else "_" for c in name]
     text = "".join(cleaned)
@@ -1050,18 +1057,38 @@ def cmd_companies(args: argparse.Namespace) -> int:
 
 
 def cmd_documents(args: argparse.Namespace) -> int:
-    """Handler for ``python data/generate.py documents``."""
+    """Handler for ``python data/generate.py documents``.
+
+    Generates CIM / financial-statements / press-release documents for
+    every company in the roster (25 by default), not just the three
+    named ``SPOTLIGHT_COMPANY_NAMES``. Earlier revisions of this
+    sample only documented the three spotlight companies, which meant
+    a screening query's actual top hit (by revenue, EBITDA margin,
+    etc.) frequently had no CIM to enrich against — the Financial
+    Analysis and Strategic Fit specialists would either fabricate
+    unsupported narrative or have to hunt through several undocumented
+    candidates before finding one with a CIM. Documenting every
+    company costs one additional Bedrock call per company (~25 calls
+    instead of 3) and a proportional amount of extra S3 storage /ingestion
+    time, both negligible for a demo-scale KB.
+
+    Pass ``--spotlight-only`` to restore the old 3-company behavior
+    (useful for a faster, cheaper local ``--dry-run`` iteration loop).
+    """
 
     rows = generate_companies(seed=args.seed)
-    spotlight = [r for r in rows if r.legal_name in SPOTLIGHT_COMPANY_NAMES]
-    if not spotlight:
-        raise SystemExit(
-            "No spotlight companies matched the generated roster — "
-            "check SPOTLIGHT_COMPANY_NAMES / COMPANY_NAMES."
-        )
+    if getattr(args, "spotlight_only", False):
+        target_rows = [r for r in rows if r.legal_name in SPOTLIGHT_COMPANY_NAMES]
+        if not target_rows:
+            raise SystemExit(
+                "No spotlight companies matched the generated roster — "
+                "check SPOTLIGHT_COMPANY_NAMES / COMPANY_NAMES."
+            )
+    else:
+        target_rows = rows
 
     artifacts: list[DocumentArtifact] = []
-    for row in spotlight:
+    for row in target_rows:
         artifacts.extend(build_company_documents(row, region_name=args.region))
 
     # Governance checklist is a single fixed document used by the
@@ -1074,10 +1101,7 @@ def cmd_documents(args: argparse.Namespace) -> int:
         )
     )
 
-    print(
-        f"Prepared {len(artifacts)} document artifacts for "
-        f"{len(spotlight)} spotlight companies."
-    )
+    print(f"Prepared {len(artifacts)} document artifacts for {len(target_rows)} companies.")
 
     if args.dry_run:
         for artifact in artifacts:
@@ -1177,7 +1201,7 @@ def cmd_seed_all(args: argparse.Namespace) -> int:
 
     print("\n=== Seed summary ===")
     print(f"Companies: {len(COMPANY_NAMES)} rows (deterministic, seed={args.seed})")
-    print(f"Spotlight document companies: {len(SPOTLIGHT_COMPANY_NAMES)}")
+    print(f"Document companies: {len(COMPANY_NAMES)} (all companies now have CIMs)")
     print(f"Prior-deal memos: {len(PRIOR_DEALS)}")
     return 0
 
@@ -1236,6 +1260,16 @@ def _build_parser() -> argparse.ArgumentParser:
         "--data-source-id",
         default=None,
         help="KB data source id — if provided, triggers an ingestion job.",
+    )
+    p_documents.add_argument(
+        "--spotlight-only",
+        action="store_true",
+        help=(
+            "Generate documents for only the 3 SPOTLIGHT_COMPANY_NAMES "
+            "companies instead of all 25 (faster/cheaper local iteration; "
+            "not recommended for a deployed KB since screening queries can "
+            "surface any of the 25 companies as a top hit)."
+        ),
     )
     p_documents.set_defaults(func=cmd_documents)
 
