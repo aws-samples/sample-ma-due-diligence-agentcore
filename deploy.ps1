@@ -249,8 +249,12 @@ if (-not $SkipSmoke) {
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Smoke test PASSED"
     } else {
-        Write-Host "Smoke test FAILED -- inspect the output above. The stack is still deployed."
-        Write-Host "You can re-run the smoke test with:  python -m pytest tests/smoke_test.py -m smoke"
+        Write-Host "WARNING: smoke test reported failures -- this is NON-FATAL; the stack is fully deployed."
+        Write-Host "Some smoke assertions (citation counts, Gateway hop) depend on Amazon Bedrock"
+        Write-Host "Knowledge Bases index consistency and Gateway warm-up, which can lag a few minutes"
+        Write-Host "after deploy. Re-run the smoke test after a short wait before treating it as a real"
+        Write-Host "failure:  python -m pytest tests/smoke_test.py -m smoke"
+        Write-Host "Or invoke an agent directly to verify:  mna invoke target_screening `"...`""
     }
 } else {
     Write-Step "Step 6/7: Smoke test skipped (-SkipSmoke)"

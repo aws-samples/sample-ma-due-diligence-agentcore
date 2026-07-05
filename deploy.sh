@@ -220,8 +220,12 @@ if [ "$SKIP_SMOKE" -eq 0 ]; then
   if python -m pytest "$REPO_ROOT/tests/smoke_test.py" -m smoke --no-header -ra; then
     log "Smoke test PASSED"
   else
-    log "Smoke test FAILED — inspect the output above. The stack is still deployed."
-    log "You can re-run the smoke test with:  python -m pytest tests/smoke_test.py -m smoke"
+    log "WARNING: smoke test reported failures — this is NON-FATAL; the stack is fully deployed."
+    log "Some smoke assertions (citation counts, Gateway hop) depend on Amazon Bedrock"
+    log "Knowledge Bases index consistency and Gateway warm-up, which can lag a few minutes"
+    log "after deploy. Re-run the smoke test after a short wait before treating it as a real"
+    log "failure:  python -m pytest tests/smoke_test.py -m smoke"
+    log "Or invoke an agent directly to verify:  mna invoke target_screening \"...\""
   fi
 else
   log "Step 6/7: Smoke test skipped (--skip-smoke)"
