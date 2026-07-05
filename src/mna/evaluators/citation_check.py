@@ -77,6 +77,19 @@ from mna.types import Citation, EvaluationResult
 # still correct, just slightly coarser.
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 
+# Markdown line break. Specialist responses are markdown — bullet
+# points, table rows, and headers each occupy their own line, and
+# very often end with a citation bracket (``[source: ...]``) rather
+# than terminal punctuation. Splitting on ``.!?`` alone left an entire
+# multi-bullet section glued into one "sentence" whenever a bullet's
+# citation bracket was the last thing before the newline, so no single
+# citation's token overlap could ever clear the 50% threshold against
+# the combined blob. Pre-splitting on newlines first — before the
+# existing sentence-terminator split runs on what remains of each
+# line — fixes this because every markdown block element reliably
+# starts a new line in the agents' output.
+_LINE_BREAK_RE = re.compile(r"\n+")
+
 # A claim sentence that carries numeric content is almost always a
 # factual claim worth citing ("grew revenue 12%", "fleet of 340 trucks").
 _NUMERIC_RE = re.compile(r"\d")
@@ -149,22 +162,30 @@ _OVERLAP_RATIO = 0.5
 def split_sentences(response_text: str) -> list[str]:
     """Split ``response_text`` into non-empty, trimmed sentences.
 
-    The splitter is deliberately simple — see module docstring for
-    the rationale. An empty or whitespace-only input returns ``[]``
-    so callers don't have to special-case it.
+    Splits on newlines first, then on sentence terminators (``.!?``)
+    within each line. The newline pre-split is what makes this
+    markdown-aware: bullet points, table rows, and headers each start
+    a new line and frequently end with a citation bracket rather than
+    terminal punctuation, so splitting on ``.!?`` alone would glue an
+    entire multi-bullet section into a single claim that no citation's
+    token overlap could satisfy. See :data:`_LINE_BREAK_RE` for the
+    full rationale.
+
+    An empty or whitespace-only input returns ``[]`` so callers don't
+    have to special-case it.
     """
 
     if not response_text:
         return []
-    raw = _SENTENCE_SPLIT_RE.split(response_text.strip())
-    # Drop the trailing punctuation that the split leaves on each
-    # sentence and strip whitespace. Preserve internal punctuation so
-    # quoted passages survive the round trip.
     sentences: list[str] = []
-    for chunk in raw:
-        trimmed = chunk.strip()
-        if trimmed:
-            sentences.append(trimmed)
+    for line in _LINE_BREAK_RE.split(response_text.strip()):
+        line = line.strip()
+        if not line:
+            continue
+        for chunk in _SENTENCE_SPLIT_RE.split(line):
+            trimmed = chunk.strip()
+            if trimmed:
+                sentences.append(trimmed)
     return sentences
 
 

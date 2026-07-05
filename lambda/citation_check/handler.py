@@ -68,6 +68,11 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+# Markdown line break — split on this first so bullets/table rows/
+# headers each become their own claim instead of being glued together
+# whenever a line ends with a citation bracket instead of ``.!?``.
+# See ``src/mna/evaluators/citation_check.py`` for the full rationale.
+_LINE_BREAK_RE = re.compile(r"\n+")
 _NUMERIC_RE = re.compile(r"\d")
 _QUOTE_RE = re.compile(r"[\"'“”‘’]")
 _TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
@@ -116,15 +121,24 @@ _STOP_TOKENS: frozenset[str] = frozenset(
 
 
 def _split_sentences(response_text: str) -> list[str]:
-    """Split text into trimmed, non-empty sentences."""
+    """Split text into trimmed, non-empty sentences.
+
+    Splits on newlines first, then on sentence terminators within
+    each line, so markdown bullets/table rows/headers are each
+    evaluated as their own claim(s) rather than glued together.
+    """
 
     if not response_text:
         return []
     sentences: list[str] = []
-    for chunk in _SENTENCE_SPLIT_RE.split(response_text.strip()):
-        trimmed = chunk.strip()
-        if trimmed:
-            sentences.append(trimmed)
+    for line in _LINE_BREAK_RE.split(response_text.strip()):
+        line = line.strip()
+        if not line:
+            continue
+        for chunk in _SENTENCE_SPLIT_RE.split(line):
+            trimmed = chunk.strip()
+            if trimmed:
+                sentences.append(trimmed)
     return sentences
 
 
