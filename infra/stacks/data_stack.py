@@ -120,7 +120,6 @@ _SESSIONS_TABLE_NAME = "mna-sessions"
 _SSM_AURORA_CLUSTER_ARN = "/mna/aurora/cluster_arn"
 _SSM_AURORA_SECRET_ARN = "/mna/aurora/secret_arn"  # noqa: S105 - SSM parameter path, not a credential
 _SSM_DOCS_BUCKET = "/mna/docs/bucket"
-_SSM_SESSIONS_TABLE = "/mna/sessions/table"
 _SSM_KB_ID = "/mna/kb/id"
 
 # Bedrock KB configuration constants.
@@ -833,13 +832,6 @@ class DataStack(Stack):
             parameter_name=_SSM_DOCS_BUCKET,
             string_value=self.documents_bucket.bucket_name,
             description="S3 bucket holding the synthetic M&A documents",
-        )
-        ssm.StringParameter(
-            self,
-            "SessionsTableParam",
-            parameter_name=_SSM_SESSIONS_TABLE,
-            string_value=self.sessions_table.table_name,
-            description="DynamoDB table for agent session turns",
         )
         ssm.StringParameter(
             self,

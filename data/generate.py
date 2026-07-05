@@ -1133,13 +1133,20 @@ def cmd_memory(args: argparse.Namespace) -> int:
         print("Dry run: nothing written to AgentCore Memory.")
         return 0
 
-    if not args.memory_id:
+    memory_id = args.memory_id
+    if not memory_id:
+        # Fall back to SSM, same pattern as cmd_companies' cluster_arn /
+        # secret_arn resolution. ``load_config`` reads ``/mna/memory/id``,
+        # populated by :class:`AgentStack`.
+        config = _load_mna_config(args.region)
+        memory_id = config.memory_id
+    if not memory_id:
         raise SystemExit(
-            "--memory-id is required for the memory subcommand; "
-            "supply the AgentCore Memory resource id."
+            "Could not resolve the AgentCore Memory id. Pass --memory-id, "
+            "set MNA_MEMORY_ID, or confirm /mna/memory/id is populated in SSM."
         )
 
-    written = seed_memory(memory_id=args.memory_id, region_name=args.region)
+    written = seed_memory(memory_id=memory_id, region_name=args.region)
     print(f"Wrote {written} memos to AgentCore Memory (namespace: prior_deals).")
     return 0
 
