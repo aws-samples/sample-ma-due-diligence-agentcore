@@ -40,16 +40,14 @@ if TYPE_CHECKING:  # pragma: no cover - import only for type checkers
 logger = get_logger(__name__)
 
 #: Default Amazon Bedrock model used to generate SQL from natural language.
-#: Uses the Haiku 4.5 inference profile — same as the specialist
-#: agents. The original Haiku 3.5 direct model ID was flagged Legacy
-#: and the runtime role's IAM policy only covers inference-profile
-#: ARNs (with ``*`` region for cross-region routing).
-#: Overridable via ``MNA_TEXT_TO_SQL_MODEL`` so a reader can swap in
-#: a cheaper or faster model without editing source.
-DEFAULT_MODEL_ID = os.getenv(
-    "MNA_TEXT_TO_SQL_MODEL",
-    "us.anthropic.claude-haiku-4-5-20251001-v1:0",
-)
+#: Uses the Claude Sonnet 4.6 inference profile — the same default
+#: model every agent in this sample uses (see
+#: ``mna.agents._base.DEFAULT_MODEL_ID``). The runtime role's IAM
+#: policy only covers inference-profile ARNs (with ``*`` region for
+#: cross-region routing), so any override must also be an
+#: inference-profile id, not a bare foundation-model id. Overridable
+#: via the ``MNA_MODEL`` environment variable.
+DEFAULT_MODEL_ID = os.getenv("MNA_MODEL", "us.anthropic.claude-sonnet-4-6")
 
 #: Default logical database name. Matches the name created by the
 #: Aurora schema bootstrap Custom Resource.
@@ -313,7 +311,6 @@ def _generate_sql(
     """Ask Bedrock to translate ``natural_language`` into a SELECT statement."""
 
     system_prompt = _SYSTEM_PROMPT_TEMPLATE.format(schema=_load_schema() or "(schema unavailable)")
-
     response = bedrock_client.converse(
         modelId=model_id,
         system=[{"text": system_prompt}],
@@ -323,7 +320,7 @@ def _generate_sql(
                 "content": [{"text": natural_language}],
             }
         ],
-        inferenceConfig={"maxTokens": 512, "temperature": 0.0},
+        inferenceConfig={"maxTokens": 512},
     )
 
     text = _extract_sql_from_response(response)

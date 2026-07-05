@@ -42,9 +42,11 @@ from typing import Any
 
 from mna.agents import citation_collector
 from mna.agents._base import (
+    DEFAULT_SPECIALIST_MAX_TOKENS,
     DEFAULT_SPECIALIST_MODEL,
     Agent,
     BedrockModel,
+    build_bedrock_client_config,
     load_prompt,
     tool,
 )
@@ -85,7 +87,11 @@ def market_data(industry_code: str, deal_size_band: str) -> dict[str, Any]:
 TOOLS: list[Any] = [kb_retrieve, market_data]
 
 agent = Agent(
-    model=BedrockModel(model_id=DEFAULT_SPECIALIST_MODEL),
+    model=BedrockModel(
+        model_id=DEFAULT_SPECIALIST_MODEL,
+        max_tokens=DEFAULT_SPECIALIST_MAX_TOKENS,
+        boto_client_config=build_bedrock_client_config(),
+    ),
     system_prompt=SYSTEM_PROMPT,
     tools=TOOLS,
     name=AGENT_NAME,

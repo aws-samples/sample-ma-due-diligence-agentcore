@@ -46,6 +46,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import random
 import sys
 import time
@@ -410,9 +411,9 @@ def _build_rds_data_client(region_name: str | None = None) -> BaseClient:
 
 
 #: Amazon Bedrock model used to fill in document narrative when available.
-#: Haiku is cheap and fast; if Amazon Bedrock is unreachable the static
-#: template still produces a valid document.
-DOCUMENT_MODEL_ID = "anthropic.claude-3-5-haiku-20241022-v1:0"
+#: Overridable via ``MNA_MODEL``. If unreachable, degrades to the static
+#: template.
+DOCUMENT_MODEL_ID = os.getenv("MNA_MODEL", "us.anthropic.claude-sonnet-4-6")
 
 
 #: Governance checklist markdown — a small static document so the
