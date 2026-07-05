@@ -390,7 +390,7 @@ hour of wall time).
 |---|---|---|
 | Aurora Serverless v2 | ~$0.12 | 1 hour at 0.5 ACU minimum (or 0 ACU if configured to scale to zero) |
 | AgentCore Runtime | ~$0.30 | ~5 minutes of active compute across the four prompts |
-| Bedrock (Claude Sonnet 4.5 + Haiku + Titan Embed) | ~$1.00 | 4 prompts + embedding ingestion |
+| Amazon Bedrock (Claude Sonnet 4.6 + Titan Embed) | ~$1.00 | 4 prompts + embedding ingestion |
 | Amazon Bedrock Knowledge Bases (vector ops) | ~$0.20 | Serverless pricing |
 | DynamoDB | <$0.01 | On-demand, minimal writes |
 | Lambda (evaluator + market-data + build waiter) | <$0.01 | Free tier |
