@@ -233,7 +233,11 @@ Skip flags for re-runs:
 ## Running the Walkthrough
 
 Invoke agents from the CLI. Each command targets a single specialist
-and exercises a distinct capability of the architecture:
+and exercises a distinct capability of the architecture. `--session-id`
+can be any string between 33 and 256 characters — Amazon Bedrock
+AgentCore's length constraint on `runtimeSessionId` — so a UUID or a
+descriptive slug padded to length both work; omit the flag and the CLI
+generates a UUID for you.
 
 ```bash
 mna list-agents

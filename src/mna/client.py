@@ -353,6 +353,8 @@ def _parse_sse_stream(text: str) -> dict[str, Any]:
     citations: list[Any] = []
     trace_id: str | None = None
     session_id: str | None = None
+    error_type: str | None = None
+    error_message: str | None = None
 
     for line in text.splitlines():
         line = line.strip()
@@ -372,6 +374,20 @@ def _parse_sse_stream(text: str) -> dict[str, Any]:
             continue
 
         if not isinstance(event, dict):
+            continue
+
+        # The ``bedrock_agentcore`` runtime's ``_stream_with_error_handling``
+        # wrapper catches any exception raised mid-stream (for example
+        # ``strands.types.exceptions.MaxTokensReachedException``) and
+        # yields ``{"error": str(exc), "error_type": type(exc).__name__,
+        # "message": "An error occurred during streaming"}`` instead of
+        # re-raising. Capture the real ``error``/``error_type`` here so
+        # callers see the actual cause instead of the generic message.
+        if "error_type" in event or (
+            "error" in event and event.get("message") == "An error occurred during streaming"
+        ):
+            error_type = error_type or event.get("error_type")
+            error_message = error_message or event.get("error")
             continue
 
         # Check for metadata event (final event from supervisor).
@@ -399,12 +415,16 @@ def _parse_sse_stream(text: str) -> dict[str, Any]:
         trace_id = trace_id or event.get("trace_id") or event.get("traceId")
         session_id = session_id or event.get("session_id") or event.get("sessionId")
 
-    return {
+    result: dict[str, Any] = {
         "text": "".join(aggregated_text),
         "citations": citations,
         "trace_id": trace_id,
         "session_id": session_id,
     }
+    if error_type or error_message:
+        result["error_type"] = error_type
+        result["error"] = error_message
+    return result
 
 
 def _parse_response_payload(raw_body: bytes) -> dict[str, Any]:
@@ -528,6 +548,34 @@ def _resolve_qualifier(agent_name: str) -> str:
     return agent_name
 
 
+#: ``bedrock-agentcore:InvokeAgentRuntime``'s ``runtimeSessionId``
+#: parameter must be 33-256 characters. Passing a shorter value (e.g.
+#: a plain UUID's 36 chars is fine, but a short custom string like
+#: ``"my-session-01"`` is not) currently fails deep inside botocore
+#: with a bare ``ParamValidationError: Invalid length for parameter
+#: runtimeSessionId``. Validating here up front gives callers an
+#: actionable message before any network call is made.
+_RUNTIME_SESSION_ID_MIN_LEN = 33
+_RUNTIME_SESSION_ID_MAX_LEN = 256
+
+
+def _validate_session_id(session_id: str) -> None:
+    """Raise :class:`ClientError` if ``session_id`` violates the runtime's
+    ``runtimeSessionId`` length constraint (33-256 characters).
+    """
+
+    length = len(session_id)
+    if length < _RUNTIME_SESSION_ID_MIN_LEN or length > _RUNTIME_SESSION_ID_MAX_LEN:
+        raise ClientError(
+            f"session_id must be {_RUNTIME_SESSION_ID_MIN_LEN}-"
+            f"{_RUNTIME_SESSION_ID_MAX_LEN} characters long "
+            f"(got {length} for {session_id!r}). AgentCore Runtime's "
+            "runtimeSessionId parameter enforces this range. Pad the "
+            "session id with extra characters (e.g. trailing zeros) or "
+            "omit --session-id to let the client generate a UUID."
+        )
+
+
 def invoke_agent(
     agent_name: str,
     prompt: str,
@@ -558,6 +606,7 @@ def invoke_agent(
 
     qualifier = _resolve_qualifier(agent_name)
     resolved_session_id = session_id or str(uuid.uuid4())
+    _validate_session_id(resolved_session_id)
 
     if runtime_arn is None:
         runtime_arn = load_config(region_name=region_name).runtime_arn
@@ -617,6 +666,31 @@ def invoke_agent(
     parsed = _parse_response_payload(raw_body)
 
     text = _extract_text(parsed) or parsed.get("text") or ""
+    # Surface the real exception type/message when the runtime's
+    # ``_stream_with_error_handling`` wrapper caught one mid-stream
+    # (see ``_parse_sse_stream``). ``text`` may be empty (the stream
+    # died before any tokens were emitted) or a truncated partial
+    # response (the model was mid-sentence) — either way, appending
+    # the real error means ``mna invoke`` output is diagnosable
+    # instead of showing only the generic "An error occurred during
+    # streaming" message.
+    runtime_error_type = parsed.get("error_type")
+    runtime_error = parsed.get("error")
+    if runtime_error_type or runtime_error:
+        note = f"[runtime error: {runtime_error_type or 'Unknown'}] {runtime_error or ''}".strip()
+        if text.strip() in ("", "An error occurred during streaming"):
+            text = note
+        else:
+            text = f"{text}\n\n{note}"
+        logger.warning(
+            "agent_invocation_streaming_error",
+            extra={
+                "agent": qualifier,
+                "session_id": resolved_session_id,
+                "runtime_error_type": runtime_error_type,
+                "runtime_error": runtime_error,
+            },
+        )
     citations = _coerce_citations(_extract_raw_citations(parsed) or parsed.get("citations") or [])
     trace_id = (
         parsed.get("trace_id")
