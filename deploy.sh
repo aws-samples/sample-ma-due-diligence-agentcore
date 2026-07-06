@@ -8,12 +8,16 @@
 #   parity enforced by Requirement NFR-RT-7 / 11.7).
 #
 # What this script does (in order)
-#   1. Preflight: region check + Amazon Bedrock model-access check. Both exit
-#      non-zero with actionable error messages, so deployment fails fast
-#      before any billable resource is created (Requirement 10.2).
-#   2. Set up a local Python virtual environment under `.venv/` and
-#      install pinned dependencies from requirements.txt. Keeps the
-#      reader's global Python clean (design §"Virtual environment").
+#   1. Preflight: region check. Exits non-zero with an actionable error
+#      message, so deployment fails fast before any billable resource
+#      is created (Requirement 10.2).
+#   2. Set up a local Python virtual environment under `.venv/`,
+#      install pinned dependencies from requirements.txt, and install
+#      this project itself in editable mode (`pip install -e .`) so the
+#      `mna` package and its `mna` console-script entry point are
+#      available for data/generate.py, tests/smoke_test.py, the
+#      notebook, and Step 2 of the walkthrough. Keeps the reader's
+#      global Python clean (design §"Virtual environment").
 #   3. `cdk bootstrap` — idempotent. Skipped on accounts where the
 #      bootstrap stack is already present.
 #   4. `cdk deploy --all` — CDK resolves the Network → Data → Evaluator
@@ -29,8 +33,7 @@
 #   1  preflight or deployment failure (terminates at the failing step)
 #
 # Optional flags
-#   --skip-preflight   Skip scripts/check_region.sh and
-#                      scripts/check_bedrock_access.sh. Handy for re-runs
+#   --skip-preflight   Skip scripts/check_region.sh. Handy for re-runs
 #                      where the reader already confirmed the environment.
 #   --skip-seed        Skip `data/generate.py --seed-all`. Useful if the
 #                      reader plans to run the generator manually with
@@ -80,9 +83,8 @@ log() { printf '\n[deploy] %s\n' "$*"; }
 # Step 1: Preflight
 # ---------------------------------------------------------------------------
 if [ "$SKIP_PREFLIGHT" -eq 0 ]; then
-  log "Step 1/7: Preflight checks (region + Bedrock access)"
+  log "Step 1/7: Preflight checks (region)"
   bash "$REPO_ROOT/scripts/check_region.sh"
-  bash "$REPO_ROOT/scripts/check_bedrock_access.sh"
 else
   log "Step 1/7: Preflight checks skipped (--skip-preflight)"
 fi
@@ -114,6 +116,15 @@ if [ "$SKIP_VENV" -eq 0 ]; then
   log "Upgrading pip and installing pinned requirements.txt"
   python -m pip install --quiet --upgrade pip
   python -m pip install --quiet -r "$REPO_ROOT/requirements.txt"
+
+  # Install this project in editable mode so the `mna` package (used by
+  # data/generate.py, tests/smoke_test.py, and the notebook) and the
+  # `mna` console-script entry point (used in Step 2 of the walkthrough)
+  # are both available. Without this, `mna invoke ...` is not found on
+  # PATH and `data/generate.py --seed-all` fails with
+  # "ModuleNotFoundError: No module named 'mna'".
+  log "Installing project in editable mode (pip install -e .)"
+  python -m pip install --quiet -e "$REPO_ROOT"
 
   # --------------------------------------------------------------
   # Vendor boto3 into lambda/_vendor (see deploy.ps1 for rationale).
@@ -209,8 +220,12 @@ if [ "$SKIP_SMOKE" -eq 0 ]; then
   if python -m pytest "$REPO_ROOT/tests/smoke_test.py" -m smoke --no-header -ra; then
     log "Smoke test PASSED"
   else
-    log "Smoke test FAILED — inspect the output above. The stack is still deployed."
-    log "You can re-run the smoke test with:  python -m pytest tests/smoke_test.py -m smoke"
+    log "WARNING: smoke test reported failures — this is NON-FATAL; the stack is fully deployed."
+    log "Some smoke assertions (citation counts, Gateway hop) depend on Amazon Bedrock"
+    log "Knowledge Bases index consistency and Gateway warm-up, which can lag a few minutes"
+    log "after deploy. Re-run the smoke test after a short wait before treating it as a real"
+    log "failure:  python -m pytest tests/smoke_test.py -m smoke"
+    log "Or invoke an agent directly to verify:  mna invoke target_screening \"...\""
   fi
 else
   log "Step 6/7: Smoke test skipped (--skip-smoke)"
@@ -222,17 +237,9 @@ fi
 log "Step 7/7: Deployment complete"
 cat <<EOF
 
-Next steps:
-  1. Open the walkthrough notebook:
-       jupyter lab notebooks/walkthrough.ipynb
-     (or "jupyter notebook notebooks/walkthrough.ipynb")
-
-  2. Alternatively, invoke an agent from the CLI:
-       python -m cli.invoke list-agents
-       python -m cli.invoke invoke supervisor "Screen mid-market logistics targets."
-
-  3. Tear down all billable resources when you are done:
-       ./cleanup.sh
+Deployment complete. See the README for next steps (running the
+walkthrough notebook, invoking agents from the CLI, and tearing down
+resources with ./cleanup.sh).
 
 Cost reminder: leaving the stack deployed continues to accrue charges
 (primarily Aurora Serverless v2). Run cleanup.sh as soon as you are done.

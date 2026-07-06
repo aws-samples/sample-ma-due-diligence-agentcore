@@ -32,6 +32,8 @@ Public attributes consumed downstream:
 * :attr:`agent_runtime_role` — the IAM role attached to the runtime.
 * :attr:`memory` — the ``aws_bedrockagentcore.Memory`` L2 construct.
 * :attr:`memory_id` / :attr:`memory_arn` — Memory resource tokens.
+* :attr:`memory_id_parameter` — the SSM parameter publishing the
+  Memory ID at ``/mna/memory/id``.
 * :attr:`runtime` — the ``aws_bedrockagentcore.Runtime`` L2 construct.
 * :attr:`runtime_id` / :attr:`runtime_arn` — Runtime resource tokens.
 * :attr:`runtime_arn_parameter` — the SSM parameter publishing the
@@ -63,6 +65,7 @@ if TYPE_CHECKING:
 # --------------------------------------------------------------------------- #
 
 _SSM_RUNTIME_ARN = "/mna/runtime/arn"
+_SSM_MEMORY_ID = "/mna/memory/id"
 
 _RUNTIME_NAME = "mna_supervisor"
 _MEMORY_NAME = "mna_agent_memory"
@@ -90,12 +93,16 @@ _GUARDRAIL_DENIAL_EXAMPLES: tuple[str, ...] = (
 )
 
 _FOUNDATION_MODEL_IDS: tuple[str, ...] = (
+    "anthropic.claude-sonnet-4-6",
+    "anthropic.claude-sonnet-5",
     "anthropic.claude-sonnet-4-5-20250929-v1:0",
     "anthropic.claude-haiku-4-5-20251001-v1:0",
     "amazon.titan-embed-text-v2:0",
 )
 
 _INFERENCE_PROFILE_IDS: tuple[str, ...] = (
+    "us.anthropic.claude-sonnet-4-6",
+    "us.anthropic.claude-sonnet-5",
     "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
     "us.anthropic.claude-haiku-4-5-20251001-v1:0",
 )
@@ -202,6 +209,32 @@ class AgentStack(Stack):
         )
         self.memory_id: str = self.memory.memory_id
         self.memory_arn: str = self.memory.memory_arn
+
+        # ------------------------------------------------------------------
+        # SSM parameter ``/mna/memory/id`` (Req 2.3, 2.4)
+        #
+        # Every other resource this sample provisions (Runtime, KB,
+        # docs bucket, Aurora, Gateway, Evaluator) publishes its
+        # identifier to SSM so ``mna.config.load_config()`` can
+        # resolve it outside the running agent container. The Memory
+        # ID previously only reached callers via the ``MNA_MEMORY_ID``
+        # env var injected into the runtime container below, which left
+        # local tooling (``data/generate.py --seed-all``, run from the
+        # reader's shell during ``deploy.sh``) with no way to discover
+        # it. Publishing it here closes that gap.
+        # ------------------------------------------------------------------
+        self.memory_id_parameter = ssm.StringParameter(
+            self,
+            "MemoryIdParameter",
+            parameter_name=_SSM_MEMORY_ID,
+            string_value=self.memory_id,
+            description=(
+                "ID of the AgentCore Memory resource storing the "
+                "'prior_deals' namespace. Consumed by "
+                "mna.config.load_config() and data/generate.py "
+                "--seed-all."
+            ),
+        )
 
         # ------------------------------------------------------------------
         # Agent runtime IAM role (Req 1.4, 14.1)

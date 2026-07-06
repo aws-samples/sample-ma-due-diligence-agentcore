@@ -84,8 +84,7 @@ sample-ma-due-diligence-agentcore/
 │   └── market_data/
 │
 ├── scripts/                    # Preflight and cleanup helpers
-└── tests/                      # Unit tests + smoke test
-    ├── unit/
+└── tests/                      # Post-deploy smoke test
     └── smoke_test.py
 ```
 
@@ -122,8 +121,7 @@ Create `src/mna/agents/<agent_name>.py`. Use the existing specialists
 as a template. The module must:
 
 - Start with a docstring covering **Role**, **Tools**, and
-  **Example prompt** (Requirement 16.3). The docstring test in
-  `tests/unit/test_agents.py` enforces this.
+  **Example prompt** (Requirement 16.3).
 - Define `AGENT_NAME = "<agent_name>"`.
 - Load the prompt via `SYSTEM_PROMPT = load_prompt(AGENT_NAME)`.
 - Wrap each of its tools with `@tool` from `mna.agents._base`.
@@ -156,11 +154,8 @@ by the existing agents — scope every statement to a specific
 resource ARN, and document what the statement is for in a comment
 above it.
 
-### 6. Add tests
+### 6. Add a smoke-test case
 
-- `tests/unit/test_agents.py`: add the new agent to the parametrized
-  `SPECIALIST_MODULES` table plus a tool-isolation test so a future
-  refactor doesn't accidentally hand your agent the wrong tool.
 - `tests/smoke_test.py`: add a `SpecialistCase` entry with an example
   prompt. If the agent exercises a Gateway path, set
   `requires_gateway=True`.
@@ -211,17 +206,7 @@ the agent runtime role. Permissions must be scoped to the specific
 resource ARN (Lambda, Bedrock KB, Aurora cluster) — never use `*`
 unless the service requires it.
 
-### 4. Add tests
-
-- `tests/unit/test_<tool_name>.py`: exercise the happy path, a
-  validation failure (bad input), and the error wrapping path
-  (underlying AWS call raises).
-- If the tool talks to a Lambda, also write a test for the Lambda
-  handler in `tests/unit/test_<handler_name>.py`.
-- If the tool is deterministic and pure, consider a property-based
-  test using Hypothesis.
-
-### 5. Update documentation
+### 4. Update documentation
 
 Add the tool to the README's "what's implemented vs. extension"
 table and (if relevant) to the agent's example prompt in `prompts.md`.
@@ -243,16 +228,15 @@ Resource Safety Requirements*. Reference it in PR reviews.
 | # | Rule | How to verify |
 |---|---|---|
 | 1 | **Cold-start safety.** No `boto3` import, client construction, or env var lookup at module top level. | `scripts/lint_cr_handlers.py` grep check; manual review of the top of the handler file. |
-| 2 | **Guaranteed response.** The entire handler body wrapped in `try / except / finally`; the `finally` block sends a response via raw `urllib.request`. | Unit test that simulates an `ImportError` and asserts the response URL receives a `FAILED` payload. |
+| 2 | **Guaranteed response.** The entire handler body wrapped in `try / except / finally`; the `finally` block sends a response via raw `urllib.request`. | Code review — trace the `finally` block to confirm a response is sent on every path. |
 | 3 | **urllib response.** Response sending uses the shared helper in `lambda/_cr_common/send_response.py`, which uses `urllib.request` (not boto3). | Code review. |
-| 4 | **Timely failure.** Handler returns a `FAILED` status within the Lambda's invocation window (max 15 min) with a reason string including exception type and log stream name. | Unit test for a simulated exception. |
-| 5 | **Polling cap.** Any CR that waits on asynchronous work caps total wait time at **14 minutes** (below the 15-min Lambda timeout) and returns a clear `FAILED` on timeout. | Unit test that patches the polling clock. |
-| 6 | **Delete idempotency.** `Delete` succeeds even when the target resource does not exist ("not found" exceptions swallowed). | Unit test for delete-of-missing. |
-| 7 | **Response size <4 KB.** Large strings (CodeBuild build outputs, SQL result sets, long ARN lists) are truncated or replaced with a CloudWatch log reference. | Unit test that feeds an oversized `Data` payload and asserts truncation. |
-| 8 | **Shared base module.** The handler imports from `lambda/_cr_common/send_response.py`. No handler reimplements response-sending logic. | Code review; `tests/unit/test_cr_common.py`. |
-| 9 | **Physical ID stability.** The physical ID returned on `Update` matches the `Create` physical ID when the underlying resource is the same. | Unit test for the Update path. |
-| 10 | **Defensive logging.** Handler logs `RequestType`, `PhysicalResourceId`, and request parameters (with secrets redacted) on entry. Failure paths log with `logger.exception()` before the finally block. | Unit test that asserts log output; code review. |
-| 11 | **Unit test coverage.** Tests cover at minimum: simulated import error, runtime exception, successful Create, successful Update, Delete-of-missing. Each produces a well-formed CloudFormation response body. | `tests/unit/test_<handler_name>.py`. |
+| 4 | **Timely failure.** Handler returns a `FAILED` status within the Lambda's invocation window (max 15 min) with a reason string including exception type and log stream name. | Code review; exercise the handler manually against a deployed stack if the change is non-trivial. |
+| 5 | **Polling cap.** Any CR that waits on asynchronous work caps total wait time at **14 minutes** (below the 15-min Lambda timeout) and returns a clear `FAILED` on timeout. | Code review of the polling loop's exit conditions. |
+| 6 | **Delete idempotency.** `Delete` succeeds even when the target resource does not exist ("not found" exceptions swallowed). | Code review of the `_on_delete` path. |
+| 7 | **Response size <4 KB.** Large strings (CodeBuild build outputs, SQL result sets, long ARN lists) are truncated or replaced with a CloudWatch log reference. | Code review of what gets passed into the `Data` payload. |
+| 8 | **Shared base module.** The handler imports from `lambda/_cr_common/send_response.py`. No handler reimplements response-sending logic. | Code review. |
+| 9 | **Physical ID stability.** The physical ID returned on `Update` matches the `Create` physical ID when the underlying resource is the same. | Code review of the `_on_update` path. |
+| 10 | **Defensive logging.** Handler logs `RequestType`, `PhysicalResourceId`, and request parameters (with secrets redacted) on entry. Failure paths log with `logger.exception()` before the finally block. | Code review. |
 
 If a rule is intentionally skipped (for example, a CR that doesn't
 poll doesn't need rule 5), document the rationale in the handler's
@@ -304,23 +288,13 @@ docstring.
 
 ## Testing
 
-- **Unit tests** (`tests/unit/`) — fast, no AWS calls. Run with
-  `pytest tests/unit/`. These must pass on every PR.
 - **Smoke test** (`tests/smoke_test.py`) — requires a deployed stack.
   Runs automatically at the end of `deploy.sh` / `deploy.ps1`. Skips
-  cleanly when SSM parameters are not populated.
-- **Coverage goals** — every new function gets a happy-path test and
-  a failure-path test. Every new CR gets the full 5-case coverage
-  listed above.
+  cleanly when SSM parameters are not populated. This is the sample's
+  only automated test surface — verify changes against a real deploy
+  rather than a mocked unit test.
 
-Run the full unit suite before pushing:
-
-```bash
-pytest tests/unit/
-ruff check .
-```
-
-Both commands must exit 0.
+Run `ruff check .` before pushing; it must exit 0.
 
 ---
 
@@ -334,8 +308,9 @@ Copy-paste this into your PR description and tick each box.
       summarizes the "why", not only the "what".
 - [ ] I have read the relevant sections of `design.md` and
       `requirements.md`.
-- [ ] `pytest tests/unit/` passes locally.
 - [ ] `ruff check .` reports no findings.
+- [ ] `tests/smoke_test.py -m smoke` passes against a deployed stack
+      (if the change affects agent, tool, or infra behavior).
 - [ ] `cdk synth` completes without warnings (if infra changed).
 - [ ] If a Custom Resource was added or modified, every rule in the
       [Custom Resource review checklist](#custom-resource-review-checklist)

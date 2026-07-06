@@ -15,15 +15,23 @@
 
 CREATE SCHEMA IF NOT EXISTS mna;
 
+-- IMPORTANT CONTEXT FOR SQL GENERATION:
+-- ebitda_margin_pct and customer_concentration_top1_pct are stored as
+-- PERCENTAGE POINTS on a 0-100 scale, NOT as a 0-1 fraction. For
+-- example, a value of 15.78 means an EBITDA margin of 15.78%, not
+-- 1578%. When a user says "EBITDA margin above 12%", filter with
+-- `ebitda_margin_pct > 12`, NOT `ebitda_margin_pct > 0.12` (the latter
+-- is a no-op filter that matches every row, since every margin in
+-- this table is well above 0.12).
 CREATE TABLE IF NOT EXISTS mna.target_companies (
     company_id                         TEXT PRIMARY KEY,
     legal_name                         TEXT NOT NULL,
     headquarters_region                TEXT,
     revenue_usd                        NUMERIC(14, 2),
-    ebitda_margin_pct                  NUMERIC(5, 2),
+    ebitda_margin_pct                  NUMERIC(5, 2), -- 0-100 scale, e.g. 15.78 = 15.78%
     fleet_size                         INTEGER,
     employee_count                     INTEGER,
-    customer_concentration_top1_pct    NUMERIC(5, 2),
+    customer_concentration_top1_pct    NUMERIC(5, 2), -- 0-100 scale, e.g. 29.2 = 29.2%
     service_lines                      TEXT[],
     last_updated                       TIMESTAMP DEFAULT NOW()
 );

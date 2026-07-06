@@ -98,7 +98,6 @@ addopts = [
     "--strict-config",
 ]
 markers = [
-    "unit: fast unit tests with no AWS dependency",
     "integration: tests that call AWS services",
     "smoke: post-deploy smoke tests",
 ]

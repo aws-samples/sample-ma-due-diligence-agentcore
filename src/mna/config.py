@@ -8,13 +8,13 @@ handlers never hardcode an ARN.
 Parameter names:
 
 * ``/mna/runtime/arn``         -- AgentCore Runtime ARN
+* ``/mna/memory/id``           -- AgentCore Memory resource ID
 * ``/mna/kb/id``               -- Amazon Bedrock Knowledge Bases ID
 * ``/mna/docs/bucket``         -- Documents S3 bucket name
 * ``/mna/aurora/cluster_arn``  -- Aurora cluster ARN
 * ``/mna/aurora/secret_arn``   -- Aurora admin-credentials secret ARN
 * ``/mna/gateway/arn``         -- AgentCore Gateway ARN
 * ``/mna/evaluator/arn``       -- Citation-check Lambda ARN
-* ``/mna/sessions/table``      -- DynamoDB table for per-turn audit rows
 """
 
 from __future__ import annotations
@@ -33,24 +33,24 @@ logger = get_logger(__name__)
 
 # Canonical SSM parameter names. Keep in sync with the CDK stacks.
 PARAM_RUNTIME_ARN = "/mna/runtime/arn"
+PARAM_MEMORY_ID = "/mna/memory/id"
 PARAM_KB_ID = "/mna/kb/id"
 PARAM_DOCS_BUCKET = "/mna/docs/bucket"
 PARAM_AURORA_CLUSTER_ARN = "/mna/aurora/cluster_arn"
 PARAM_AURORA_SECRET_ARN = "/mna/aurora/secret_arn"  # noqa: S105 - SSM parameter path, not a credential
 PARAM_GATEWAY_ARN = "/mna/gateway/arn"
 PARAM_EVALUATOR_ARN = "/mna/evaluator/arn"
-PARAM_SESSIONS_TABLE = "/mna/sessions/table"
 
 #: All parameters resolved by :func:`load_config`, in stable iteration order.
 ALL_PARAMETERS: tuple[str, ...] = (
     PARAM_RUNTIME_ARN,
+    PARAM_MEMORY_ID,
     PARAM_KB_ID,
     PARAM_DOCS_BUCKET,
     PARAM_AURORA_CLUSTER_ARN,
     PARAM_AURORA_SECRET_ARN,
     PARAM_GATEWAY_ARN,
     PARAM_EVALUATOR_ARN,
-    PARAM_SESSIONS_TABLE,
 )
 
 
@@ -63,24 +63,24 @@ class MnaConfig:
     """Resolved configuration for a deployed MNA environment."""
 
     runtime_arn: str
+    memory_id: str
     kb_id: str
     docs_bucket: str
     aurora_cluster_arn: str
     aurora_secret_arn: str
     gateway_arn: str
     evaluator_arn: str
-    sessions_table_name: str
 
     def as_dict(self) -> dict[str, str]:
         return {
             PARAM_RUNTIME_ARN: self.runtime_arn,
+            PARAM_MEMORY_ID: self.memory_id,
             PARAM_KB_ID: self.kb_id,
             PARAM_DOCS_BUCKET: self.docs_bucket,
             PARAM_AURORA_CLUSTER_ARN: self.aurora_cluster_arn,
             PARAM_AURORA_SECRET_ARN: self.aurora_secret_arn,
             PARAM_GATEWAY_ARN: self.gateway_arn,
             PARAM_EVALUATOR_ARN: self.evaluator_arn,
-            PARAM_SESSIONS_TABLE: self.sessions_table_name,
         }
 
 
@@ -186,13 +186,13 @@ def _cached_load_config(region_name: str | None) -> MnaConfig:
     values = get_parameters(ALL_PARAMETERS, region_name=region_name)
     return MnaConfig(
         runtime_arn=values[PARAM_RUNTIME_ARN],
+        memory_id=values[PARAM_MEMORY_ID],
         kb_id=values[PARAM_KB_ID],
         docs_bucket=values[PARAM_DOCS_BUCKET],
         aurora_cluster_arn=values[PARAM_AURORA_CLUSTER_ARN],
         aurora_secret_arn=values[PARAM_AURORA_SECRET_ARN],
         gateway_arn=values[PARAM_GATEWAY_ARN],
         evaluator_arn=values[PARAM_EVALUATOR_ARN],
-        sessions_table_name=values[PARAM_SESSIONS_TABLE],
     )
 
 
@@ -214,13 +214,13 @@ def load_config(
         values = get_parameters(ALL_PARAMETERS, ssm_client=ssm_client)
         return MnaConfig(
             runtime_arn=values[PARAM_RUNTIME_ARN],
+            memory_id=values[PARAM_MEMORY_ID],
             kb_id=values[PARAM_KB_ID],
             docs_bucket=values[PARAM_DOCS_BUCKET],
             aurora_cluster_arn=values[PARAM_AURORA_CLUSTER_ARN],
             aurora_secret_arn=values[PARAM_AURORA_SECRET_ARN],
             gateway_arn=values[PARAM_GATEWAY_ARN],
             evaluator_arn=values[PARAM_EVALUATOR_ARN],
-            sessions_table_name=values[PARAM_SESSIONS_TABLE],
         )
 
     if not use_cache:

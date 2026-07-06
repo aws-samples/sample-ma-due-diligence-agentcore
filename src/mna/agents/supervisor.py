@@ -18,9 +18,8 @@ as calling the specialist directly.
 
 Model
 -----
-Pinned to Claude Sonnet 4.5 by default
-(``anthropic.claude-sonnet-4-5-v1:0``). Override with the
-``MNA_SUPERVISOR_MODEL`` environment variable.
+Claude Sonnet 4.6 by default. Override with the ``MNA_MODEL``
+environment variable.
 
 Guardrail
 ---------
@@ -69,11 +68,13 @@ from mna.agents import (
 )
 from mna.agents._base import (
     AGENTCORE_APP_AVAILABLE,
+    DEFAULT_SUPERVISOR_MAX_TOKENS,
     DEFAULT_SUPERVISOR_MODEL,
     STRANDS_AVAILABLE,
     Agent,
     BedrockAgentCoreApp,
     BedrockModel,
+    build_bedrock_client_config,
     load_prompt,
 )
 from mna.logging_config import get_logger
@@ -165,7 +166,11 @@ def _build_supervisor_model() -> Any:
     without Guardrails still produces a working (if ungated) model.
     """
 
-    kwargs: dict[str, Any] = {"model_id": DEFAULT_SUPERVISOR_MODEL}
+    kwargs: dict[str, Any] = {
+        "model_id": DEFAULT_SUPERVISOR_MODEL,
+        "max_tokens": DEFAULT_SUPERVISOR_MAX_TOKENS,
+        "boto_client_config": build_bedrock_client_config(),
+    }
     if GUARDRAIL_ID:
         # Strands' ``BedrockModel`` accepts ``guardrail_id``; keep the
         # keyword name in sync with the SDK. The stub BedrockModel

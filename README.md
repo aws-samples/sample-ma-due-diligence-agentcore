@@ -26,6 +26,7 @@ This sample accompanies a companion AWS Machine Learning blog post (coming soon)
 
 - [Overview](#overview)
 - [Architecture](#architecture)
+- [Security Architecture](#security-architecture)
 - [Prerequisites](#prerequisites)
 - [Quick start](#quick-start)
 - [Running the walkthrough](#running-the-walkthrough)
@@ -99,11 +100,52 @@ for the full flow.
 
 ---
 
+## Security Architecture
+
+M&A due-diligence data is highly confidential — target-company
+financials, deal terms, and integration plans — so security is layered
+across every tier of the sample rather than bolted on as an
+afterthought:
+
+- **Identity and access (IAM)** — every AgentCore-callable AWS
+  permission is scoped to a specific resource ARN (model, guardrail,
+  knowledge base, table, memory, gateway). The only `Resource: "*"`
+  statements are the two AWS requires (ECR token issuance,
+  foundation-model ARN wildcards); both are documented inline in
+  `infra/stacks/agent_stack.py`.
+- **Fine-grained authorization (Cedar)** — the AgentCore Gateway's
+  market-data tool is protected by a Cedar policy engine with a
+  default-deny model (`infra/stacks/gateway_stack.py` +
+  `infra/policies/market_data_gateway.cedar`). A `permit` statement
+  allows the tool to run only when the requested industry code
+  matches transportation, logistics, or trucking — every other
+  request is denied before the tool executes. This adds
+  attribute-based, input-aware authorization on top of IAM's coarser
+  action/resource model.
+- **Network isolation** — Amazon Aurora runs in private isolated
+  subnets with no route to the internet; VPC interface endpoints keep
+  Secrets Manager and RDS Data API traffic off the public internet
+  entirely (`infra/stacks/network_stack.py`).
+- **Encryption at rest** — every data store (S3, DynamoDB, Aurora) is
+  encrypted with AWS-managed KMS keys; the documents bucket blocks all
+  public access and enforces TLS on every request.
+- **Guardrails** — Amazon Bedrock Guardrails filter harmful content
+  and block personalized financial-advice requests on every
+  supervisor invocation.
+- **Secrets management** — Aurora credentials are auto-generated into
+  Secrets Manager (nothing hardcoded); IAM database authentication
+  offers a passwordless path for the agent runtime.
+
+See the [IAM Summary](#iam-summary) section below for the full role
+and permission breakdown.
+
+---
+
 ## Prerequisites
 
 | Tool | Version | Windows | macOS | Linux |
 |---|---|---|---|---|
-| AWS account | n/a | Amazon Bedrock model access enabled for Anthropic Claude and Amazon Titan | same | same |
+| AWS account | n/a | Any account with permission to deploy the stacks below | same | same |
 | AWS CLI | v2.15+ | MSI installer | `brew install awscli` | distribution package / pip |
 | Python | 3.11+ | [python.org](https://www.python.org/downloads/) installer | `brew install python@3.11` | distribution package / pyenv |
 | Node.js | 20+ | [nodejs.org](https://nodejs.org/) installer | `brew install node` | distribution package / nvm |
@@ -160,16 +202,19 @@ deploy time. See the authoritative list in the
 
 The deploy script will:
 
-1. Verify the AWS region is GA for AgentCore and the required Bedrock
-   model IDs are accessible.
-2. Create a local `.venv`.
-3. Install pinned dependencies from `requirements.txt`.
-4. Run `cdk bootstrap` (idempotent).
-5. Run `cdk deploy --all --require-approval never` in dependency order.
-6. Seed synthetic data via `python data/generate.py --seed-all`.
-7. Run `tests/smoke_test.py` against the deployed stack as a post-deploy
+1. Verify the AWS region is GA for AgentCore.
+2. Create a local `.venv`, install pinned dependencies from
+   `requirements.txt`, and install this project itself in editable
+   mode (`pip install -e .`). That last step registers the `mna`
+   console-script entry point you'll use starting in
+   [Running the Walkthrough](#running-the-walkthrough) — no separate
+   install needed.
+3. Run `cdk bootstrap` (idempotent).
+4. Run `cdk deploy --all --require-approval never` in dependency order.
+5. Seed synthetic data via `python data/generate.py --seed-all`.
+6. Run `tests/smoke_test.py` against the deployed stack as a post-deploy
    verification step.
-8. Print next-steps instructions.
+7. Print next-steps instructions.
 
 First-time deploys take about 20-25 minutes (Amazon Aurora Serverless v2 is
 the long pole). Re-deploys take a few minutes.
@@ -178,7 +223,7 @@ Skip flags for re-runs:
 
 | Flag (bash / PowerShell) | Purpose |
 |---|---|
-| `--skip-preflight` / `-SkipPreflight` | Skip region + Bedrock-access checks. |
+| `--skip-preflight` / `-SkipPreflight` | Skip the region check. |
 | `--skip-venv` / `-SkipVenv` | Use active Python instead of creating `.venv`. |
 | `--skip-seed` / `-SkipSeed` | Skip `data/generate.py --seed-all`. |
 | `--skip-smoke` / `-SkipSmoke` | Skip the post-deploy smoke test. |
@@ -188,7 +233,11 @@ Skip flags for re-runs:
 ## Running the Walkthrough
 
 Invoke agents from the CLI. Each command targets a single specialist
-and exercises a distinct capability of the architecture:
+and exercises a distinct capability of the architecture. `--session-id`
+can be any string between 33 and 256 characters — Amazon Bedrock
+AgentCore's length constraint on `runtimeSessionId` — so a UUID or a
+descriptive slug padded to length both work; omit the flag and the CLI
+generates a UUID for you.
 
 ```bash
 mna list-agents
@@ -325,7 +374,8 @@ exists.
 | Data — S3 | Documents bucket (block public, SSE-S3, versioned) | SSE-KMS with customer managed key, Object Lock |
 | Gateway Targets — Lambda | One market-data mock Lambda | Additional tools (HTTP APIs, third-party APIs, SaaS connectors) |
 | Evaluation — Custom evaluator | Citation-check Lambda + local mirror | AgentCore Evaluations, LLM-as-judge, continuous monitoring |
-| Security — IAM | Least-privilege roles, scoped resource ARNs | Cedar policies |
+| Security — IAM | Least-privilege roles, scoped resource ARNs | — |
+| Security — Authorization | Cedar policy engine on the AgentCore Gateway (default-deny, industry-scoped market-data tool access) | Cedar policies on additional tools/gateways |
 | Security — Encryption | AWS-managed KMS (SSE-S3, DynamoDB, Aurora) | Customer-managed KMS keys |
 | Security — Network | Aurora in private isolated subnets; VPC endpoints for Secrets Manager, RDS Data API, S3 | PrivateLink everywhere, AWS Config rules, CloudTrail data events |
 
@@ -340,7 +390,7 @@ hour of wall time).
 |---|---|---|
 | Aurora Serverless v2 | ~$0.12 | 1 hour at 0.5 ACU minimum (or 0 ACU if configured to scale to zero) |
 | AgentCore Runtime | ~$0.30 | ~5 minutes of active compute across the four prompts |
-| Bedrock (Claude Sonnet 4.5 + Haiku + Titan Embed) | ~$1.00 | 4 prompts + embedding ingestion |
+| Amazon Bedrock (Claude Sonnet 4.6 + Titan Embed) | ~$1.00 | 4 prompts + embedding ingestion |
 | Amazon Bedrock Knowledge Bases (vector ops) | ~$0.20 | Serverless pricing |
 | DynamoDB | <$0.01 | On-demand, minimal writes |
 | Lambda (evaluator + market-data + build waiter) | <$0.01 | Free tier |
@@ -414,7 +464,6 @@ every sweep.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `check_region.*` exits non-zero: "region not supported" | Current AWS region is not GA for AgentCore. | Set `AWS_REGION` or `aws configure set region` to one of the supported regions listed above. |
-| `check_bedrock_access.*` exits non-zero: "model access not enabled" | Anthropic Claude or Amazon Titan model access is not enabled for the account/region. | Open the [Amazon Bedrock model access console](https://console.aws.amazon.com/bedrock/home#/modelaccess) and enable access to the Claude family (Sonnet 4.5 + Haiku) and Amazon Titan Embed. |
 | `cdk bootstrap` fails with "AccessDenied on s3:PutBucketPublicAccessBlock" | Your caller identity lacks bootstrap permissions. | Use credentials with `AdministratorAccess` for the first bootstrap; downgrade afterwards. |
 | `cdk deploy` fails on AgentStack with "CodeBuild build failed" | The agent image could not be built. Usually a Docker Hub rate-limit or a dependency-resolution error. | Re-run `deploy.sh` — the build trigger re-attempts. If it fails twice, open the CloudWatch log group `/aws/codebuild/mna-agent-builder`. |
 | `cdk deploy` on AgentStack hangs for >15 minutes after "Build started" | Build waiter polling timed out. | Re-run `deploy.sh`. A cold CodeBuild start plus a cold Aurora provision can push the first deploy close to the waiter cap. |

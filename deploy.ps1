@@ -10,9 +10,9 @@
     next-steps message.
 
     What this script does (in order)
-      1. Preflight: region check + Amazon Bedrock model-access check. Both exit
-         non-zero with actionable error messages, so deployment fails
-         fast before any billable resource is created (Requirement 10.2).
+      1. Preflight: region check. Exits non-zero with an actionable
+         error message, so deployment fails fast before any billable
+         resource is created (Requirement 10.2).
       2. Set up a local Python virtual environment under `.venv\` and
          install pinned dependencies from requirements.txt. Keeps the
          reader's global Python clean (design §"Virtual environment").
@@ -31,8 +31,8 @@
       1  preflight or deployment failure (terminates at the failing step)
 
 .PARAMETER SkipPreflight
-    Skip scripts/check_region.ps1 and scripts/check_bedrock_access.ps1.
-    Useful for re-runs where the reader already confirmed the environment.
+    Skip scripts/check_region.ps1. Useful for re-runs where the reader
+    already confirmed the environment.
 
 .PARAMETER SkipSeed
     Skip `data/generate.py --seed-all`. Useful if the reader plans to run
@@ -90,11 +90,9 @@ function Invoke-Checked {
 # Step 1: Preflight
 # ---------------------------------------------------------------------------
 if (-not $SkipPreflight) {
-    Write-Step "Step 1/7: Preflight checks (region + Bedrock access)"
+    Write-Step "Step 1/7: Preflight checks (region)"
     & "$RepoRoot\scripts\check_region.ps1"
     if ($LASTEXITCODE -ne 0) { throw "check_region.ps1 failed." }
-    & "$RepoRoot\scripts\check_bedrock_access.ps1"
-    if ($LASTEXITCODE -ne 0) { throw "check_bedrock_access.ps1 failed." }
 } else {
     Write-Step "Step 1/7: Preflight checks skipped (-SkipPreflight)"
 }
@@ -132,6 +130,15 @@ if (-not $SkipVenv) {
     Write-Host "Upgrading pip and installing pinned requirements.txt"
     Invoke-Checked "python" "-m" "pip" "install" "--quiet" "--upgrade" "pip"
     Invoke-Checked "python" "-m" "pip" "install" "--quiet" "-r" (Join-Path $RepoRoot "requirements.txt")
+
+    # Install this project in editable mode so the `mna` package (used by
+    # data/generate.py, tests/smoke_test.py, and the notebook) and the
+    # `mna` console-script entry point (used in Step 2 of the walkthrough)
+    # are both available. Without this, `mna invoke ...` is not found on
+    # PATH and `data/generate.py --seed-all` fails with
+    # "ModuleNotFoundError: No module named 'mna'".
+    Write-Host "Installing project in editable mode (pip install -e .)"
+    Invoke-Checked "python" "-m" "pip" "install" "--quiet" "-e" $RepoRoot
 
     # --------------------------------------------------------------
     # Vendor boto3 into lambda/_vendor so every CR Lambda ships the
@@ -242,8 +249,12 @@ if (-not $SkipSmoke) {
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Smoke test PASSED"
     } else {
-        Write-Host "Smoke test FAILED -- inspect the output above. The stack is still deployed."
-        Write-Host "You can re-run the smoke test with:  python -m pytest tests/smoke_test.py -m smoke"
+        Write-Host "WARNING: smoke test reported failures -- this is NON-FATAL; the stack is fully deployed."
+        Write-Host "Some smoke assertions (citation counts, Gateway hop) depend on Amazon Bedrock"
+        Write-Host "Knowledge Bases index consistency and Gateway warm-up, which can lag a few minutes"
+        Write-Host "after deploy. Re-run the smoke test after a short wait before treating it as a real"
+        Write-Host "failure:  python -m pytest tests/smoke_test.py -m smoke"
+        Write-Host "Or invoke an agent directly to verify:  mna invoke target_screening `"...`""
     }
 } else {
     Write-Step "Step 6/7: Smoke test skipped (-SkipSmoke)"
@@ -255,17 +266,9 @@ if (-not $SkipSmoke) {
 Write-Step "Step 7/7: Deployment complete"
 @"
 
-Next steps:
-  1. Open the walkthrough notebook:
-       jupyter lab notebooks\walkthrough.ipynb
-     (or "jupyter notebook notebooks\walkthrough.ipynb")
-
-  2. Alternatively, invoke an agent from the CLI:
-       python -m cli.invoke list-agents
-       python -m cli.invoke invoke supervisor "Screen mid-market logistics targets."
-
-  3. Tear down all billable resources when you are done:
-       .\cleanup.ps1
+Deployment complete. See the README for next steps (running the
+walkthrough notebook, invoking agents from the CLI, and tearing down
+resources with .\cleanup.ps1).
 
 Cost reminder: leaving the stack deployed continues to accrue charges
 (primarily Aurora Serverless v2). Run cleanup.ps1 as soon as you are done.

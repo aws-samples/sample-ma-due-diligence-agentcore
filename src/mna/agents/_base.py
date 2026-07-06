@@ -1,21 +1,8 @@
 """Shared helpers for the Strands-based agent modules.
 
-Provides:
-
-* :func:`load_prompt` — read a system prompt from ``agents/prompts/``.
-* :data:`DEFAULT_SPECIALIST_MODEL` — the pinned specialist model id,
-  overridable via ``MNA_SPECIALIST_MODEL``.
-* :data:`DEFAULT_SUPERVISOR_MODEL` — the pinned supervisor model id,
-  overridable via ``MNA_SUPERVISOR_MODEL``.
-* :data:`STRANDS_AVAILABLE` — truthy when the Strands SDK is importable.
-* :data:`Agent`, :data:`BedrockModel`, :data:`tool` — re-exports from
-  Strands when available, otherwise lightweight stand-ins that let the
-  module import and the tool list be introspected without the SDK
-  installed. The stubs raise on ``__call__`` so accidental production
-  use without Strands fails loudly.
-
-The module is deliberately side-effect free: importing it never
-constructs an :class:`Agent` instance and never reads AWS credentials.
+Provides ``load_prompt``, the default model/token/timeout settings, and
+``Agent``/``BedrockModel``/``tool`` re-exports (with stub fallbacks when
+Strands isn't installed). Side-effect free on import.
 """
 
 from __future__ import annotations
@@ -31,37 +18,41 @@ logger = get_logger(__name__)
 #: Directory holding the ``.txt`` system prompts for every agent.
 PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
 
-#: Default specialist model. Uses the US cross-region inference
-#: profile for Claude Haiku 4.5 -- Anthropic's current small,
-#: fast, cheap model. The original Haiku 3.5 default was flagged
-#: Legacy on accounts that hadn't invoked it in 30 days, causing
-#: Bedrock to return ``ResourceNotFoundException``. Haiku 4.5 is
-#: Active and has a meaningfully better tool-use success rate.
-#: Overridable via ``MNA_SPECIALIST_MODEL``.
-DEFAULT_SPECIALIST_MODEL = os.getenv(
-    "MNA_SPECIALIST_MODEL",
-    "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+#: Default model for every agent. Overridable via ``MNA_MODEL``.
+DEFAULT_MODEL_ID = os.getenv("MNA_MODEL", "us.anthropic.claude-sonnet-4-6")
+
+#: Aliases kept for readability at call sites; both resolve to DEFAULT_MODEL_ID.
+DEFAULT_SPECIALIST_MODEL = DEFAULT_MODEL_ID
+DEFAULT_SUPERVISOR_MODEL = DEFAULT_MODEL_ID
+
+#: Max output tokens for specialist models. Overridable via ``MNA_SPECIALIST_MAX_TOKENS``.
+DEFAULT_SPECIALIST_MAX_TOKENS = int(os.getenv("MNA_SPECIALIST_MAX_TOKENS", "16384"))
+
+#: Max output tokens for the supervisor model. Overridable via ``MNA_SUPERVISOR_MAX_TOKENS``.
+DEFAULT_SUPERVISOR_MAX_TOKENS = int(os.getenv("MNA_SUPERVISOR_MAX_TOKENS", "16384"))
+
+#: bedrock-runtime read timeout (seconds). Overridable via ``MNA_BEDROCK_READ_TIMEOUT_SECONDS``.
+DEFAULT_BEDROCK_READ_TIMEOUT_SECONDS = int(
+    os.getenv("MNA_BEDROCK_READ_TIMEOUT_SECONDS", "300")
 )
 
-#: Default supervisor model. Claude Sonnet 4.5 via the US
-#: cross-region inference profile. The version-dated identifier
-#: (``...-20250929-v1:0``) is the one Bedrock actually accepts;
-#: the un-dated ``us.anthropic.claude-sonnet-4-5-v1:0`` is rejected
-#: with ``ValidationException: The provided model identifier is
-#: invalid``. Overridable via ``MNA_SUPERVISOR_MODEL``.
-DEFAULT_SUPERVISOR_MODEL = os.getenv(
-    "MNA_SUPERVISOR_MODEL",
-    "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
-)
+
+def build_bedrock_client_config() -> Any:
+    """Return a ``botocore.config.Config`` with a generous read timeout.
+
+    Pass as ``BedrockModel(boto_client_config=...)`` so long Converse
+    calls don't time out. Returns ``None`` if botocore isn't installed.
+    """
+
+    try:
+        from botocore.config import Config as _BotocoreConfig
+    except ImportError:  # pragma: no cover - exercised only when botocore is absent
+        return None
+    return _BotocoreConfig(read_timeout=DEFAULT_BEDROCK_READ_TIMEOUT_SECONDS)
 
 
 def load_prompt(name: str) -> str:
-    """Read the system prompt file named ``<name>.txt`` from ``prompts/``.
-
-    Raises :class:`FileNotFoundError` with a clear message if the file
-    is missing. The agent modules call this at module scope, so a
-    missing prompt surfaces at import time rather than at invocation.
-    """
+    """Read the system prompt file named ``<name>.txt`` from ``prompts/``."""
 
     if not name or not isinstance(name, str):
         raise ValueError("prompt name must be a non-empty string")
@@ -71,16 +62,8 @@ def load_prompt(name: str) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
-# ---------------------------------------------------------------------------
-# Strands SDK import shim.
-#
-# The Strands SDK is not always installed in the environment where the
-# unit tests or CI linting run (it is only pinned in the agent
-# container image's ``requirements.txt``). Import lazily with a graceful
-# fallback so ``import mna.agents.target_screening`` works in either
-# environment.
-# ---------------------------------------------------------------------------
-
+# Strands SDK import shim: falls back to stubs so agent modules stay
+# importable when strands-agents isn't installed (e.g. outside the container).
 try:
     from strands import Agent as _StrandsAgent  # type: ignore[import-not-found]
     from strands import tool as _strands_tool  # type: ignore[import-not-found]
@@ -104,12 +87,7 @@ except ImportError:  # pragma: no cover - exercised only when SDK is absent
     )
 
     class _StubAgent:
-        """Minimal stand-in for :class:`strands.Agent`.
-
-        Stores the constructor arguments so tests can introspect the
-        tool wiring, but raises on ``__call__`` to prevent accidental
-        use without the SDK installed.
-        """
+        """Minimal stand-in for ``strands.Agent``; raises on ``__call__``."""
 
         def __init__(
             self,
@@ -133,7 +111,7 @@ except ImportError:  # pragma: no cover - exercised only when SDK is absent
             )
 
         async def stream_async(self, *_args: Any, **_kwargs: Any) -> Any:
-            """Async generator stub — yields nothing, mirrors Strands Agent API."""
+            """Async generator stub, mirrors the Strands Agent API."""
             raise RuntimeError(
                 "Strands SDK is not installed; Agent instances are stubs only. "
                 "Install strands-agents to invoke the agent."
@@ -145,7 +123,7 @@ except ImportError:  # pragma: no cover - exercised only when SDK is absent
             return f"StubAgent(name={self.name!r}, tools={tool_names})"
 
     class _StubBedrockModel:
-        """Minimal stand-in for :class:`strands.models.BedrockModel`."""
+        """Minimal stand-in for ``strands.models.BedrockModel``."""
 
         def __init__(self, *, model_id: str, **kwargs: Any) -> None:
             self.model_id = model_id
@@ -155,7 +133,7 @@ except ImportError:  # pragma: no cover - exercised only when SDK is absent
             return f"StubBedrockModel(model_id={self.model_id!r})"
 
     def _stub_tool(func: Any = None, **_kwargs: Any) -> Any:
-        """Stand-in for :func:`strands.tool` that leaves callables unchanged."""
+        """Stand-in for ``strands.tool`` that leaves callables unchanged."""
 
         if func is None:
             return lambda f: f
@@ -167,15 +145,8 @@ except ImportError:  # pragma: no cover - exercised only when SDK is absent
     STRANDS_AVAILABLE = False
 
 
-# ---------------------------------------------------------------------------
-# AgentCore Runtime hosting shim.
-#
-# The runtime container decorates the supervisor entrypoint with
-# ``@BedrockAgentCoreApp``. That decorator ships in the
-# ``bedrock-agentcore`` SDK which may not be available in every dev
-# environment either, so fall back to an inert no-op class.
-# ---------------------------------------------------------------------------
-
+# AgentCore Runtime hosting shim: falls back to an inert no-op class when
+# bedrock-agentcore isn't installed.
 try:
     from bedrock_agentcore import (  # type: ignore[import-not-found]
         BedrockAgentCoreApp as _BedrockAgentCoreApp,
@@ -186,12 +157,7 @@ try:
 except ImportError:  # pragma: no cover - exercised only when SDK is absent
 
     class _StubBedrockAgentCoreApp:
-        """Stand-in for ``bedrock_agentcore.BedrockAgentCoreApp``.
-
-        The real class is both a decorator and a runnable app object.
-        The stub records registered handlers so tests can introspect
-        them, and raises on ``run()`` to prevent accidental local use.
-        """
+        """Stand-in for ``bedrock_agentcore.BedrockAgentCoreApp``; raises on ``run()``."""
 
         def __init__(self, **kwargs: Any) -> None:
             self.kwargs = kwargs
@@ -221,10 +187,15 @@ __all__ = [
     "Agent",
     "BedrockAgentCoreApp",
     "BedrockModel",
+    "DEFAULT_BEDROCK_READ_TIMEOUT_SECONDS",
+    "DEFAULT_MODEL_ID",
+    "DEFAULT_SPECIALIST_MAX_TOKENS",
     "DEFAULT_SPECIALIST_MODEL",
+    "DEFAULT_SUPERVISOR_MAX_TOKENS",
     "DEFAULT_SUPERVISOR_MODEL",
     "PROMPTS_DIR",
     "STRANDS_AVAILABLE",
+    "build_bedrock_client_config",
     "load_prompt",
     "tool",
 ]
